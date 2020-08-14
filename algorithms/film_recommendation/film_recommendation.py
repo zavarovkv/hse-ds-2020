@@ -79,10 +79,14 @@ def get_user_friends(films):
     return friends
 
 
+def get_films_discussability(user_friends):
+    discussability = {}
+
+
 # Main function for recommend one movie with the highest discussability
 # and uniqueness
-def film_recommend(films_list, similarity_list, user_friends):
-    pass
+def film_recommend(similarity_list, user_friends):
+    return 100
 
 
 films_list = get_films('imdb_1000.csv')
@@ -92,7 +96,8 @@ similarity_list = get_similarity(films_list)
 print(f'Similarity list: {similarity_list}\nCount of sim. list: {len(similarity_list)}\n')
 
 user_friends = get_user_friends(films_list)
-print(f'Friends: {user_friends}\nCount of friends: {len(user_friends)}')
+print(f'Friends: {user_friends}\nCount of friends: {len(user_friends)}\n')
 
-new_film = film_recommend(films_list, similarity_list, user_friends)
-print(f'')
+new_film_id = film_recommend(similarity_list, user_friends)
+new_film = films_list[new_film_id]
+print(f'Recommend film ID: {new_film_id}\nRecommend film title: {new_film["title"]}')
