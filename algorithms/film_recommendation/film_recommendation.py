@@ -13,6 +13,7 @@
 import csv
 import ast
 import itertools
+import random
 
 
 # Rad films from csv file (f_name)
@@ -37,10 +38,10 @@ def get_films(f_name):
 
 
 # Find similarity between films by actors, who played in more than only one movie
-def get_similarity(films):
+def get_similarity(films_list):
     actors = {}
 
-    for id, desc in films.items():
+    for id, desc in films_list.items():
         actors_list = ast.literal_eval(desc['actors_list'])
         for actor in actors_list:
             if actor in actors:
@@ -61,9 +62,37 @@ def get_similarity(films):
     return similarity_list
 
 
+# Generate dict of users with random films
+def get_user_friends(films):
+    friends = {}
+    friends_cnt = random.randint(10, 50)
+
+    for friend_id in range(friends_cnt):
+        films_cnt = random.randint(5, 100)
+
+        for _ in range(films_cnt):
+            if friend_id in friends:
+                friends[friend_id].append(random.choice(list(films.keys())))
+            else:
+                friends[friend_id] = []
+
+    return friends
+
+
+# Main function for recommend one movie with the highest discussability
+# and uniqueness
+def film_recommend(films_list, similarity_list, user_friends):
+    pass
+
+
 films_list = get_films('imdb_1000.csv')
 print(f'Films: {films_list}\nCount of films: {len(films_list)}\n')
 
 similarity_list = get_similarity(films_list)
-print(f'Similarity list: {similarity_list}\nCount of sim. list: {len(similarity_list)}')
+print(f'Similarity list: {similarity_list}\nCount of sim. list: {len(similarity_list)}\n')
 
+user_friends = get_user_friends(films_list)
+print(f'Friends: {user_friends}\nCount of friends: {len(user_friends)}')
+
+new_film = film_recommend(films_list, similarity_list, user_friends)
+print(f'')
