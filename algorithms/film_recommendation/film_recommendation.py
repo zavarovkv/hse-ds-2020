@@ -37,7 +37,11 @@ def get_films(f_name):
     return data
 
 
-# Find similarity between films by actors, who played in more than only one movie
+# Find similarity between films by actors, who played in more than only one movie.
+# As result, function return list of tuples with similar film ID's,
+# for example: [(123, 456), (456, 789)]. Result contains all combinations of similar
+# films without permutations (as can see in example). Similarities are possesses
+# the transitive property, it mean's '123' and '789' are similarity too
 def get_similarity(films_list):
     actors = {}
 
@@ -97,6 +101,7 @@ def get_films_discussability(user_friends):
 
 # Uniqueness is 1 divided by the mean number of similar movies that the user's friends have already seen
 def get_films_uniqueness(similarity_list, user_friends):
+
     return {}
 
 
