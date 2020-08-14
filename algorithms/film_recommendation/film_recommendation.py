@@ -82,10 +82,26 @@ def get_user_friends(films):
 def get_films_discussability(user_friends):
     discussability = {}
 
+    for _, films in user_friends.items():
+        for film_id in films:
+            if film_id in discussability:
+                discussability[film_id] += 1
+            else:
+                discussability[film_id] = 1
+    
+    # Check discussability's correct calculation
+    # print({k: v for k, v in sorted(discussability.items(), key=lambda item: item[1], reverse=True)})
+
+    return discussability
+
 
 # Main function for recommend one movie with the highest discussability
 # and uniqueness
 def film_recommend(similarity_list, user_friends):
+    discussability = get_films_discussability(user_friends)
+
+
+
     return 100
 
 
