@@ -88,21 +88,44 @@ def get_films_discussability(user_friends):
                 discussability[film_id] += 1
             else:
                 discussability[film_id] = 1
-    
+
     # Check discussability's correct calculation
     # print({k: v for k, v in sorted(discussability.items(), key=lambda item: item[1], reverse=True)})
 
     return discussability
 
 
+# Uniqueness is 1 divided by the mean number of similar movies that the user's friends have already seen
+def get_films_uniqueness(similarity_list, user_friends):
+    return {}
+
+
 # Main function for recommend one movie with the highest discussability
 # and uniqueness
 def film_recommend(similarity_list, user_friends):
     discussability = get_films_discussability(user_friends)
+    uniqueness = get_films_uniqueness(similarity_list, user_friends)
 
+    # Return the film with the highest number: F / S, where F = number
+    # of friends who have seen this movie, and S = mean of the number
+    # of similar movies seen for each friend.
 
+    highest_value = 0
+    highest_films = []
+    for film_id in discussability.keys():
+        if film_id in uniqueness:
+            value = discussability[film_id] / uniqueness[film_id]
 
-    return 100
+            if value > highest_value:
+                highest_value = value
+                highest_films = [film_id]
+
+            elif value == highest_value:
+                highest_films.append(film_id)
+        else:
+            continue
+
+    return highest_films
 
 
 films_list = get_films('imdb_1000.csv')
@@ -114,6 +137,8 @@ print(f'Similarity list: {similarity_list}\nCount of sim. list: {len(similarity_
 user_friends = get_user_friends(films_list)
 print(f'Friends: {user_friends}\nCount of friends: {len(user_friends)}\n')
 
-new_film_id = film_recommend(similarity_list, user_friends)
-new_film = films_list[new_film_id]
-print(f'Recommend film ID: {new_film_id}\nRecommend film title: {new_film["title"]}')
+
+best_films_id = film_recommend(similarity_list, user_friends)
+
+for film_id in best_films_id:
+    print(f'Recommend film: ID={id}, Title={films_list[film_id]["title"]}')
