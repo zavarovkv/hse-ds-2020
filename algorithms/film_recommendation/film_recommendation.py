@@ -99,17 +99,73 @@ def get_films_discussability(user_friends):
     return discussability
 
 
-# Uniqueness is 1 divided by the mean number of similar movies that the user's friends have already seen
-def get_films_uniqueness(similarity_list, user_friends):
+def convert_to_adj_dict(lst):
+    adj_dict = {}
 
-    return {}
+    for (v1, v2) in lst:
+        if v1 in adj_dict:
+            if v2 not in adj_dict[v1]:
+                adj_dict[v1].append(v2)
+        else:
+            adj_dict[v1] = [v2]
+
+        if v2 in adj_dict:
+            if v1 not in adj_dict[v2]:
+                adj_dict[v2].append(v1)
+        else:
+            adj_dict[v2] = [v1]
+
+    return adj_dict
+
+
+def get_component_for_films(similarity_list):
+    adj_dict = convert_to_adj_dict(similarity_list)
+    film_component = {}
+    num_components = 0
+
+    visited = {}
+
+    def dfs(v):
+        film_component[v] = num_components
+        visited[v] = True
+        for w in adj_dict[v]:
+            if w not in visited:
+                dfs(w)
+
+    for v in adj_dict:
+        if v not in visited:
+            dfs(v)
+            num_components += 1
+
+    return film_component
+
+
+# Uniqueness is mean number of similar movies that the user's friends have already seen
+def get_films_uniqueness(discussability, similarity_list, user_friends):
+    uniqueness = {}
+    components = get_component_for_films(similarity_list)
+
+    for film_id in discussability:
+        total_similar_films = 0
+
+        for _, friends_film_list in user_friends.items():
+            for friend_film_id in friends_film_list:
+                if film_id not in components or friend_film_id not in components:
+                    continue
+                if components[film_id] == components[friend_film_id]:
+                    total_similar_films += 1
+
+        mean_value = total_similar_films / len(user_friends)
+        uniqueness[film_id] = mean_value
+
+    return uniqueness
 
 
 # Main function for recommend one movie with the highest discussability
 # and uniqueness
 def film_recommend(similarity_list, user_friends):
     discussability = get_films_discussability(user_friends)
-    uniqueness = get_films_uniqueness(similarity_list, user_friends)
+    uniqueness = get_films_uniqueness(discussability, similarity_list, user_friends)
 
     # Return the film with the highest number: F / S, where F = number
     # of friends who have seen this movie, and S = mean of the number
@@ -117,9 +173,13 @@ def film_recommend(similarity_list, user_friends):
 
     highest_value = 0
     highest_films = []
+
     for film_id in discussability.keys():
         if film_id in uniqueness:
-            value = discussability[film_id] / uniqueness[film_id]
+            if film_id not in uniqueness or uniqueness[film_id] == 0:
+                value = 0
+            else:
+                value = discussability[film_id] / uniqueness[film_id]
 
             if value > highest_value:
                 highest_value = value
@@ -130,7 +190,7 @@ def film_recommend(similarity_list, user_friends):
         else:
             continue
 
-    return highest_films
+    return (highest_films, highest_value)
 
 
 films_list = get_films('imdb_1000.csv')
@@ -143,7 +203,7 @@ user_friends = get_user_friends(films_list)
 print(f'Friends: {user_friends}\nCount of friends: {len(user_friends)}\n')
 
 
-best_films_id = film_recommend(similarity_list, user_friends)
+best_films_id, best_films_rate = film_recommend(similarity_list, user_friends)
 
 for film_id in best_films_id:
-    print(f'Recommend film: ID={id}, Title={films_list[film_id]["title"]}')
+    print(f'Recommend film: ID = {film_id}, Title = {films_list[film_id]["title"]}, Rate = {best_films_rate}')
