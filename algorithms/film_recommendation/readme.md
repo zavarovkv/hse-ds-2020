@@ -1,4 +1,4 @@
-### Film Recommendation: Algorithm
+## Film Recommendation: Algorithm
 You are tasked with developing a movie recommendation system. You are given a list of movies (their names) and a list of similarities between movies (pairs of movies that are similar). You are also given a list of user's friends and for each friend a list of movies that he has already seen. Your system should recommend one movie with the highest discussability and uniqueness. Discussability is the number of friends of user, who have already seen that movie. Uniqueness is 1 divided by the mean number of similar movies that the user's friends have already seen. So you should return the film with the highest number: F / S, where F = number of friends who have seen this movie, and S = mean of the number of similar movies seen for each friend.
 
 ### Preparation of input data
