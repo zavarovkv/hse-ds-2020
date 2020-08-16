@@ -9,12 +9,15 @@ Convert user's friends list to dictionary too, example `{0: [0, 1, 3], 1: [4, 10
   
   Time estimate for preparation data: O(M) + O(R) + O(N)
 
-### Calculate discussability
+### Calculate Discussability
 Result of discussability calculations will kepp in __discussability_dict__. 
 
 ```python
 For each friend in friends_dict:
-    For each film in friends_dict[friend]
+    For each film in friends_dict[friend]:
         discussability_dict[film]++
 ```
+After that, __discussability_dict__ should contains all movies, which user's friends have ever watched, in other words `len(discussability_dict) ⩽ len(movies_dict)`.  
 So, max time estimate for discussability is O(M*N).  
+
+### Calculate Uniqueness
