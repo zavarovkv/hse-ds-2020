@@ -18,6 +18,7 @@ For each friend in friends_dict:
         discussability_dict[film]++
 ```
 After that, __discussability_dict__ should contains all movies, which user's friends have ever watched, in other words `len(discussability_dict) ⩽ len(movies_dict)`.  
+  
 So, max time estimate for discussability is O(M*N).  
 
 ### Calculate Uniqueness
