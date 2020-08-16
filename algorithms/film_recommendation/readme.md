@@ -59,3 +59,5 @@ return max(coef)
 ```
   
 Time estimation: O(N * M * N) = O(N^2 * M)  
+  
+And total time estimation: O(M + N + MN + N^2 * M)
