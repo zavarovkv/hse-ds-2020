@@ -14,11 +14,12 @@ Result of discussability calculations will kepp in __discussability_dict__.
 
 ```python
 For each friend in friends_dict:
-    For each film in friends_dict[friend]:
-        discussability_dict[film]++
+    For each movie in friends_dict[friend]:
+        discussability_dict[movie]++
 ```
 After that, __discussability_dict__ should contains all movies, which user's friends have ever watched, in other words `len(discussability_dict) ⩽ len(movies_dict)`.  
   
 So, max time estimate for discussability is O(M*N).  
 
 ### Calculate Uniqueness
+Now we need to determine for each movie (like vertex of the graph) the number of the connected component. Will store the connected components in the dictionary __components_dict__. To determine the connectivity component, we will use the depth-first search (DFS) algorithm.
