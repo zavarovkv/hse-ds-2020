@@ -13,8 +13,8 @@ Convert user's friends list to dictionary too, example `{0: [0, 1, 3], 1: [4, 10
 Result of discussability calculations will kepp in __discussability_dict__. 
 
 ```python
-For each friend in friends_dict:
-    For each movie in friends_dict[friend]:
+For each friend in friends_dict
+    For each movie in friends_dict[friend]
         discussability_dict[movie]++
 ```
 After that, __discussability_dict__ should contains all movies, which user's friends have ever watched, in other words `len(discussability_dict) ⩽ len(movies_dict)`.  
@@ -24,19 +24,38 @@ So, max time estimate for discussability is O(M*N).
 ### Calculate Uniqueness
 Now we need to determine for each movie (like vertex of the graph) the number of the connected component. Will store the connected components in the dictionary __components_dict__. To determine the connectivity component, we will use the depth-first search (DFS) algorithm.  
 ```python
-    components_dict = {}
+    components_dict = dict()
+    visited = dict()
     num_components = 0
-    visited = {}
 
-    def dfs(v):
+    dfs(v)
         components_dict[v] = num_components
         visited[v] = True
-        for w in similarity_dict[v]:
-            if w not in visited:
+        for w in similarity_dict[v]
+            if w not visited
                 dfs(w)
 
-    for v in similarity_dict:
-        if v not in visited:
+    for v in similarity_dict
+        if v not visited
             dfs(v)
-            num_components += 1
+            num_components++
 ```
+Thus, we can determine the component of connectivity for each movie during the time O(N + R), where N - number of films, R - number of pairs of matches between films.  
+  
+Now we should calculate final score of discussabilities and choose the largest.  
+  
+```python
+
+For each film in discussability
+    For each friend in friends_dict
+        For each friend_film in friends_dict[friend]
+            If components_dict[film] == components_dict[friend_film]
+                uniqueness[film]++
+
+    film_mean = uniqueness[film] / len(friends_dict)
+    coef[film] = discussability[film] / film_mean
+
+return max(coef)
+```
+  
+Time estimation: O(N * M * N) = O(N^2 * M)  
