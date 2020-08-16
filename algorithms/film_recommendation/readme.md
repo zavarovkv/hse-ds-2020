@@ -17,4 +17,4 @@ For each friend in friends_dict:
     For each film in friends_dict[friend]
         discussability_dict[film]++
 ```
-So, msx time estimate for discussability is O(M*N).  
+So, max time estimate for discussability is O(M*N).  
