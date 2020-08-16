@@ -22,4 +22,21 @@ After that, __discussability_dict__ should contains all movies, which user's fri
 So, max time estimate for discussability is O(M*N).  
 
 ### Calculate Uniqueness
-Now we need to determine for each movie (like vertex of the graph) the number of the connected component. Will store the connected components in the dictionary __components_dict__. To determine the connectivity component, we will use the depth-first search (DFS) algorithm.
+Now we need to determine for each movie (like vertex of the graph) the number of the connected component. Will store the connected components in the dictionary __components_dict__. To determine the connectivity component, we will use the depth-first search (DFS) algorithm.  
+```python
+    components_dict = {}
+    num_components = 0
+    visited = {}
+
+    def dfs(v):
+        components_dict[v] = num_components
+        visited[v] = True
+        for w in similarity_dict[v]:
+            if w not in visited:
+                dfs(w)
+
+    for v in similarity_dict:
+        if v not in visited:
+            dfs(v)
+            num_components += 1
+```
