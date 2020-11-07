@@ -1,0 +1,30 @@
+Before you begin open RelaAX calculator https://dbis-uibk.github.io/relax/ and load the "hotel" database into it.
+
+Find guests (id, name, email) who each time stayed the same number of nights or longer, than previously.
+
+
+π gid, gName, email (
+	(
+		π A.gid (
+			σ A.start > B.start 
+				and A.gid = B.gid 
+				and A.nights >= B.nights (
+					ρ A (
+						π gid, start, nights (Stay)
+					) ⨯ ρ B (
+						π gid, start, nights (Stay)
+					)
+				)
+		) - π A.gid (
+			σ A.start > B.start 
+				and A.gid = B.gid
+				and A.nights < B.nights (
+					ρ A (
+						π gid, start, nights (Stay)
+					) ⨯ ρ B (
+						π gid, start, nights (Stay)
+					)
+				)
+		)
+	) ⨝ Guest
+)

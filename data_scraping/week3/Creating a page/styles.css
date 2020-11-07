@@ -1,0 +1,26 @@
+body {
+    background-color: whitesmoke;
+}
+h1 {
+    color: royalblue;
+    font-size: 35px;
+    padding-bottom: 10px;
+}
+h2, h3 {
+    padding-bottom: 5px;
+    padding-top: 35px;
+}
+header {
+    padding-bottom: 20px;
+}
+.history > p > span {
+    font-weight: bold;
+}
+footer,
+.history > a {
+    font-size: 10px;
+}
+.table_title {
+    font-size: 50%;
+    text-align: left;
+}
