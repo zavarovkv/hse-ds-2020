@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>Main Page</title>
+        <link rel="stylesheet"
+              href="{{ url_for('static', path='/style.css') }}">
+    </head>
+    <body>
+        <h3>{{ message }}</h3>
+
+        <p>You should provide an archive with FastAPI application. No additional
+            libraries except built-in python libraries, numpy or matplotlib should be used.</p>
+        <p>A web-app should have a 'solve' endpoint. We should be able to send a GET-requests to the endpoint with
+            parameters a, b, and c (these are quadratic equation coefficients), and get a response with
+            equation roots.</p>
+
+        <form action="/plot" method="get" enctype="multipart/form-data">
+            Enter the coef 'a':
+            <input type="text" name="a" id="a"><br><br>
+            Enter the coef 'b':
+            <input type="text" name="b" id="b"><br><br>
+            Enter the coef 'c':
+            <input type="text" name="c" id="c"><br><br>
+
+            <button type="submit">Calculate & Plot</button>
+        </form>
+    </body>
+</html>
