@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 
 
 endpoint_url = 'https://www.imdb.com/'
+headers = {'Accept-Language': 'en',
+           'X_FORWARDED_FOR': '2.21.184.0'}
 
 
 def get_actors_by_movie_soup(cast_page_soup, num_of_actors_limit=None):
@@ -13,13 +15,17 @@ def get_actors_by_movie_soup(cast_page_soup, num_of_actors_limit=None):
     css_selector = '#fullcredits_content > table.cast_list > tr > td:nth-child(2) > a'
     actors_soup = cast_page_soup.select(css_selector)
 
+    # Check limit of actors
     if num_of_actors_limit is not None:
         actors_soup = actors_soup[:num_of_actors_limit]
 
     for actor in actors_soup:
+
+        # Get URL to actor page
         re_url = re.search(r"href=\"/(.*)\">", str(actor)).group(1)
         url_to_actor_page = endpoint_url + re_url
 
+        # Get actor's name
         re_actor = re.search(r">(.*)\s", str(actor)).group(1)
         name_of_actor = re_actor.strip()
 
@@ -36,18 +42,23 @@ def get_movies_by_actor_soup(actor_page_soup, num_of_movies_limit=None):
     movies_soup = actor_page_soup.select(css_selector)
 
     for movie in movies_soup:
+
+        # Skip all announced movies
         re_announced = re.search(r"class=\"in_production\"", str(movie))
         if re_announced is not None:
             continue
 
+        # Get URL to movie page
         re_url = re.search(r"<b><a href=\"/(.*)\">", str(movie)).group(1)
         url_to_movie_page = endpoint_url + re_url
 
+        # Get name of movie
         re_name = re.search(r"<b><a href=\"(.*)\">(.*)</a>", str(movie)).group(2)
         name_of_movie = re_name.strip()
 
         movies.append((name_of_movie, url_to_movie_page))
 
+        # Check limit of movies
         if num_of_movies_limit is not None:
             if len(movies) >= num_of_movies_limit:
                 break
@@ -61,7 +72,7 @@ def main():
         'cast_page_url': endpoint_url + 'title/tt13143964/fullcredits'
     }
 
-    cast_page = requests.get(film_details['cast_page_url'])
+    cast_page = requests.get(film_details['cast_page_url'], headers=headers)
 
     if cast_page.status_code == 200:
         cast_page_soup = BeautifulSoup(cast_page.content, 'html.parser')
@@ -73,7 +84,7 @@ def main():
         'actor_page_url': endpoint_url + 'name/nm0056187/'
     }
 
-    actor_page = requests.get(actor_details['actor_page_url'])
+    actor_page = requests.get(actor_details['actor_page_url'], headers=headers)
 
     if actor_page.status_code == 200:
         actor_page_soup = BeautifulSoup(actor_page.content, 'html.parser')
