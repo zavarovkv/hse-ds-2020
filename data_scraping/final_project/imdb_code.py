@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import itertools
 import pickle
 
-from data_scraping.week10_11.imdb_helper_functions import get_actor_name_by_url, \
+from data_scraping.final_project.imdb_helper_functions import get_actor_name_by_url, \
     draw_graph_by_adj_dict, headers
 
 
