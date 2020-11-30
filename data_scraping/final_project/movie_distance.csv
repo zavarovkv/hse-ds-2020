@@ -1,0 +1,46 @@
+actor1		actor2		distance
+Dwayne Johnson		Chris Hemsworth		2
+Dwayne Johnson		Robert Downey Jr.		2
+Dwayne Johnson		Akshay Kumar		infinity
+Dwayne Johnson		Jackie Chan		3
+Dwayne Johnson		Bradley Cooper		3
+Dwayne Johnson		Adam Sandler		3
+Dwayne Johnson		Scarlett Johansson		2
+Dwayne Johnson		Sofia Vergara		infinity
+Dwayne Johnson		Chris Evans		2
+Chris Hemsworth		Robert Downey Jr.		1
+Chris Hemsworth		Akshay Kumar		3
+Chris Hemsworth		Jackie Chan		2
+Chris Hemsworth		Bradley Cooper		3
+Chris Hemsworth		Adam Sandler		3
+Chris Hemsworth		Scarlett Johansson		1
+Chris Hemsworth		Sofia Vergara		3
+Chris Hemsworth		Chris Evans		1
+Robert Downey Jr.		Akshay Kumar		infinity
+Robert Downey Jr.		Jackie Chan		3
+Robert Downey Jr.		Bradley Cooper		infinity
+Robert Downey Jr.		Adam Sandler		infinity
+Robert Downey Jr.		Scarlett Johansson		1
+Robert Downey Jr.		Sofia Vergara		3
+Robert Downey Jr.		Chris Evans		1
+Akshay Kumar		Jackie Chan		infinity
+Akshay Kumar		Bradley Cooper		infinity
+Akshay Kumar		Adam Sandler		infinity
+Akshay Kumar		Scarlett Johansson		infinity
+Akshay Kumar		Sofia Vergara		infinity
+Akshay Kumar		Chris Evans		infinity
+Jackie Chan		Bradley Cooper		infinity
+Jackie Chan		Adam Sandler		infinity
+Jackie Chan		Scarlett Johansson		3
+Jackie Chan		Sofia Vergara		infinity
+Jackie Chan		Chris Evans		3
+Bradley Cooper		Adam Sandler		3
+Bradley Cooper		Scarlett Johansson		1
+Bradley Cooper		Sofia Vergara		3
+Bradley Cooper		Chris Evans		1
+Adam Sandler		Scarlett Johansson		2
+Adam Sandler		Sofia Vergara		3
+Adam Sandler		Chris Evans		3
+Scarlett Johansson		Sofia Vergara		infinity
+Scarlett Johansson		Chris Evans		1
+Sofia Vergara		Chris Evans		2

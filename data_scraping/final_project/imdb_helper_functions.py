@@ -65,3 +65,32 @@ def draw_graph_by_adj_dict(adj_dict, actors, file_name):
     print(f'{file_name} created.')
 
     return True
+
+
+def save_movie_distances_to_csv(adj_dict, actors, file_name):
+
+    with open(file_name, 'w') as file:
+
+        csv_header = 'actor1\t\tactor2\t\tdistance\n'
+        file.write(csv_header)
+
+        for (x, y), v in adj_dict.items():
+            distance = v
+            if v == 0:
+                distance = 'infinity'
+            csv_line = actors[x][0] + '\t\t' + actors[y][0] + '\t\t' + str(distance) + '\n'
+            file.write(csv_line)
+
+    print(f'{file_name} created.')
+
+    return True
+
+
+def save_description_to_csv(descriptions, file_name):
+    with open(file_name, 'w') as file:
+        for desc in descriptions:
+            file.write(desc)
+
+    print(f'{file_name} created.')
+
+    return True

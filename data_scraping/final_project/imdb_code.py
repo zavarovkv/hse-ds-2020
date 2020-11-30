@@ -1,11 +1,13 @@
 import requests
 import re
-from bs4 import BeautifulSoup
 import itertools
 import pickle
 
+from bs4 import BeautifulSoup
+
 from data_scraping.final_project.imdb_helper_functions import get_actor_name_by_url, \
-    draw_graph_by_adj_dict, headers
+    draw_graph_by_adj_dict, save_movie_distances_to_csv, save_description_to_csv, \
+    headers
 
 
 endpoint_url = 'https://www.imdb.com/'
@@ -139,6 +141,54 @@ def get_movie_distance(actor_start_url, actor_end_url, num_of_actors_limit=None,
     return 0
 
 
+# This function takes a beautifulsoup soup object (actor_page_soup) of a page for the the current actor.
+# The function should return a list strings. Each element is a short description of a movie, where the actor played.
+# Every movie has such a description on its page.
+def get_movie_descriptions_by_actor_soup(actor_page_soup):
+    descriptions = []
+    actor_movies = get_movies_by_actor_soup(actor_page_soup)
+
+    for (movie, url) in actor_movies:
+        movie_page = requests.get(url, headers=headers)
+        movie_page_soup = BeautifulSoup(movie_page.content, 'html.parser')
+
+        print(f' - get description for {movie}, {url}')
+
+        description = get_description_by_movie_soup(movie_page_soup)
+        if len(description) > 0:
+            descriptions.append(description)
+
+    return descriptions
+
+
+def get_movie_descriptions_by_actors(actors):
+    descriptions_by_actor = {}
+
+    for (actor, link) in actors:
+        url = endpoint_url + 'name/' + link + '/'
+
+        actor_page = requests.get(url, headers=headers)
+        actor_page_soup = BeautifulSoup(actor_page.content, 'html.parser')
+
+        print(f'Analyze actor: {actor}')
+
+        descriptions = get_movie_descriptions_by_actor_soup(actor_page_soup)
+        descriptions_by_actor[actor] = descriptions
+
+        break
+
+    return descriptions_by_actor
+
+
+def get_description_by_movie_soup(movie_page_soup):
+    description_soup = movie_page_soup.find('div', attrs={'class': 'summary_text'})
+
+    if description_soup is not None:
+        return description_soup.text
+
+    return ''
+
+
 def main():
     actors = [('Dwayne Johnson',        'nm0425005'),
               ('Chris Hemsworth',       'nm1165110'),
@@ -151,11 +201,29 @@ def main():
               ('Sofia Vergara',         'nm0005527'),
               ('Chris Evans',           'nm0262635')]
 
+    #
+    # Load or calculate movie description by actor
+    #
+    descriptions_by_actor = get_movie_descriptions_by_actors(actors)
+
+    print('Save movies descriptions to file:')
+
+    for actor, desc in descriptions_by_actor.items():
+        file_name = actor.replace(' ', '_')
+        file_name = file_name.replace('.', '')
+        file_name = 'movie_descriptions/' + file_name.lower() + '.csv'
+        
+        save_description_to_csv(desc, file_name=file_name)
+
+    #
+    # Load or calculate movie distances
+    #
     adj_dict = {}
     actors_combinations_idx = list(itertools.combinations(range(0, len(actors)), 2))
 
+    print('\nLoading movie distances from storage:')
     try:
-        with open('data.pickle', 'rb') as f:
+        with open('storage/distances.storage', 'rb') as f:
             adj_dict = pickle.load(f)
 
     except FileNotFoundError:
@@ -164,16 +232,20 @@ def main():
     else:
         if len(adj_dict) == len(actors_combinations_idx):
             print(f'{len(adj_dict)} from {len(actors_combinations_idx)} records were founded in storage. '
-                  f'Process completed.')
+                  f'Process completed.\n')
 
-            draw_graph_by_adj_dict(adj_dict, actors, file_name='all_edges_graph.png')
+            print('Save movie distances to file:')
+            save_movie_distances_to_csv(adj_dict, actors, file_name='movie_distance.csv')
+
+            print('\nPrint graphs to files:')
+            draw_graph_by_adj_dict(adj_dict, actors, file_name='graph/all_edges_graph.png')
 
             # Get uniq values from weight without 0
             weight_list = list(set([v for v in adj_dict.values()]) - {0})
 
             for weight in weight_list:
                 adj_dict_tmp = {k: v for k, v in adj_dict.items() if v == weight}
-                draw_graph_by_adj_dict(adj_dict_tmp, actors, file_name=str(weight) + '_edges_graph.png')
+                draw_graph_by_adj_dict(adj_dict_tmp, actors, file_name='graph/' + str(weight) + '_edges_graph.png')
 
             return
 
@@ -202,7 +274,7 @@ def main():
         distance = get_movie_distance(actor_start_url, actor_end_url, 5, 5)
         adj_dict[(actor_start_idx, actor_end_idx)] = distance
 
-        with open('data.pickle', 'wb') as f:
+        with open('storage/distances.storage', 'wb') as f:
             pickle.dump(adj_dict, f)
 
         print(f'{idx} / {len(actors_combinations_idx)}. '
