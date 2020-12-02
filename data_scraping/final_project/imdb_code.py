@@ -175,8 +175,6 @@ def get_movie_descriptions_by_actors(actors):
         descriptions = get_movie_descriptions_by_actor_soup(actor_page_soup)
         descriptions_by_actor[actor] = descriptions
 
-        break
-
     return descriptions_by_actor
 
 
@@ -204,7 +202,15 @@ def main():
     #
     # Load or calculate movie description by actor
     #
-    descriptions_by_actor = get_movie_descriptions_by_actors(actors)
+    descriptions_by_actor = []
+    print('\nLoading movie descriptions from storage:')
+    try:
+        with open('storage/descriptions.storage', 'rb') as f:
+            descriptions_by_actor = pickle.load(f)
+
+    except FileNotFoundError:
+        print('Data wasn\'t founded in storage. Process will start over.')
+        descriptions_by_actor = get_movie_descriptions_by_actors(actors)
 
     print('Save movies descriptions to file:')
 
@@ -214,6 +220,9 @@ def main():
         file_name = 'movie_descriptions/' + file_name.lower() + '.csv'
         
         save_description_to_csv(desc, file_name=file_name)
+
+    with open('storage/descriptions.storage', 'wb') as f:
+        pickle.dump(descriptions_by_actor, f)
 
     #
     # Load or calculate movie distances
