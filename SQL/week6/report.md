@@ -1,4 +1,4 @@
-###Task No1. Access settings
+### Task No1. Access settings
 
 ```sql
 grant usage on schema public to planadmin;
@@ -33,7 +33,7 @@ insert into country_managers (username, country) values
 ('sophie', 'US'), ('sophie', 'CA'), ('kirill', 'FR'), ('kirill', 'GB'), ('kirill', 'DE'), ('kirill', 'AU');
 ```
 
-###Task No2. product2 & country2 materialized views
+### Task No2. product2 & country2 materialized views
 
 ```sql
 --drop materialized view if exists product2;
@@ -102,7 +102,7 @@ grant select on country2 to planmanager;
 
 ```
 
-###Task No3. Loading data into the company table
+### Task No3. Loading data into the company table
 
 ```sql
 --select * from customer c;
@@ -129,7 +129,7 @@ insert into company (cname, countrycode, city)
 	where ca.addresstype = 'Main Office';
 ```
 
-###Task No4. Company classification by annual amount of orders
+### Task No4. Company classification by annual amount of orders
 
 ```sql
 --select * from salesorderheader s;
@@ -164,7 +164,7 @@ insert into company_abc (cid, salestotal, cls, year)
 	order by cid;
 ```
 
-###Task No5. Finding quarterly sales amount by company, and product category
+### Task No5. Finding quarterly sales amount by company, and product category
 
 ```sql
 --select * from company_sales cs;
@@ -200,5 +200,5 @@ insert into company_sales (cid, salesamt, year, quarter_yr, categoryid, ccls, qr
 	join company_abc cabs on (cabs.cid  = dt.cid and cabs.year = dt.year);
 ```
 
-###Task No6. Initial data preparation
+### Task No6. Initial data preparation
 
