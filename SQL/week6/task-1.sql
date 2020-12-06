@@ -24,15 +24,16 @@ grant select on country_managers to planmanager;
 grant select, update on v_plan_edit to planmanager;
 grant select on v_plan to planmanager;
 
-drop user ivan;
+--drop user ivan;
 create user ivan with password 'ivan_pwd';
 grant planadmin to ivan;
 
-create user sophie;
+--drop user sophie;
+create user sophie with password 'sophie_pwd';
 grant planmanager to sophie;
 
-
-create user kirill;
+--drop user kirill;
+create user kirill with password 'kirill_pwd';
 grant planmanager to kirill;
 
 insert into country_managers (username, country) values 

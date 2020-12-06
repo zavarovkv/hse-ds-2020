@@ -126,12 +126,112 @@ def start_planning(year, quarter, user, pwd):
     return True
 
 
+# set_lock(year, quarter, user, pwd), which will change status from R to L
+# for data slices, that are associated with the target quarter and year,
+# and connected to the current user in the country_managers configuration table.
+# To obtain the name of the current user, use current_user. Also write a timestamp
+# of modification to the modified datetime field.
+def set_lock(year, quarter, user, pwd):
+    sql_set_lock = '''
+        update plan_status 
+        set 
+            status = 'L',
+            modifieddatetime = current_timestamp,
+            author = current_user
+        where
+            quarterid = %(year)s || '.' || %(quarter_yr)s and 
+            country in (
+                select country from country_managers 
+                where username = current_user 
+            ) and 
+        status = 'R';'''
+
+    with psycopg2.connect(dbname=db_name, user=user, password=pwd, host=db_host, port=db_port) as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(sql_set_lock,    {'quarter_yr': quarter, 'year': year})
+
+            except Exception as err:
+                print(f'Error: {err}')
+
+                # rollback the previous transaction before starting another
+                conn.rollback()
+
+                return False
+
+            else:
+                conn.commit()
+
+    return True
+
+
+# remove_lock(year, quarter, user, pwd) function, that will change the
+# planning data status from L to R. associated with the current user through
+# the country_managers table. Write a change time stamp in the modified datetime field.
+def remove_lock(year, quarter, user, pwd):
+    sql_remove_lock = '''
+        update plan_status 
+        set 
+            status = 'R',
+            modifieddatetime = current_timestamp,
+            author = current_user
+        where
+            quarterid = %(year)s || '.' || %(quarter_yr)s and 
+            country in (
+                select country from country_managers 
+                where username = current_user 
+            ) and 
+        status = 'L';'''
+
+    with psycopg2.connect(dbname=db_name, user=user, password=pwd, host=db_host, port=db_port) as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(sql_remove_lock,    {'quarter_yr': quarter, 'year': year})
+
+            except Exception as err:
+                print(f'Error: {err}')
+
+                # rollback the previous transaction before starting another
+                conn.rollback()
+
+                return False
+
+            else:
+                conn.commit()
+
+    return True
+
+
 def main():
     result = start_planning(2014, 1, 'ivan', 'ivan_pwd')
     if result:
         print('Operation completed.')
     else:
-        print('Something went wrong.')
+        print('Operation: something went wrong.')
+
+    result = set_lock(2014, 1, 'kirill', 'kirill_pwd')
+    if result:
+        print('Lock completed for Kirill.')
+    else:
+        print('Lock for Kirill: something went wrong.')
+
+    result = set_lock(2014, 1, 'sophie', 'sophie_pwd')
+    if result:
+        print('Lock completed for Sophie.')
+    else:
+        print('Lock for Sophie: something went wrong.')
+
+    result = remove_lock(2014, 1, 'kirill', 'kirill_pwd')
+    if result:
+        print('Remove Lock completed.')
+    else:
+        print('Remove Lock: something went wrong.')
+
+    result = remove_lock(2014, 1, 'sophie', 'sophie_pwd')
+    if result:
+        print('Remove Lock completed.')
+    else:
+        print('Remove Lock: something went wrong.')
 
 
 if __name__ == '__main__':

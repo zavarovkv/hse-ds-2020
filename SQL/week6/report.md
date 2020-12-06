@@ -1,6 +1,14 @@
 ### Task No1. Access settings
 
 ```sql
+/* Set up permissions for roles
+ * Create three users: Administrator (ivan), Managers: (sophie, kirill)
+ * Manager sophie has access to data of US and CA countries. 
+ * Manager kirill works with sales data in FR, GB, DE, AU countries. 
+ * Put this information in the ‘country_managers’ table, which stores data about 
+ * the anchoring of managers for certain countries.
+ */
+
 grant usage on schema public to planadmin;
 grant usage on schema public to planmanager;
 
@@ -19,15 +27,22 @@ grant select on country_managers to planmanager;
 grant select, update on v_plan_edit to planmanager;
 grant select on v_plan to planmanager;
 
-create user ivan;
+--drop user ivan;
+create user ivan with password 'ivan_pwd';
 grant planadmin to ivan;
 
-create user sophie;
+--drop user sophie;
+create user sophie with password 'sophie_pwd';
 grant planmanager to sophie;
 
-create user kirill;
+--drop user kirill;
+create user kirill with password 'kirill_pwd';
 grant planmanager to kirill;
+
+insert into country_managers (username, country) values 
+('sophie', 'US'), ('sophie', 'CA'), ('kirill', 'FR'), ('kirill', 'GB'), ('kirill', 'DE'), ('kirill', 'AU');
 ```
+
 ```sql
 insert into country_managers (username, country) values 
 ('sophie', 'US'), ('sophie', 'CA'), ('kirill', 'FR'), ('kirill', 'GB'), ('kirill', 'DE'), ('kirill', 'AU');
@@ -363,3 +378,82 @@ Table 'plan_status'
 
 ![company_abs](img/plan_status.png)
 
+### Task No7. Changing the plan data
+
+```python
+# set_lock(year, quarter, user, pwd), which will change status from R to L
+# for data slices, that are associated with the target quarter and year,
+# and connected to the current user in the country_managers configuration table.
+# To obtain the name of the current user, use current_user. Also write a timestamp
+# of modification to the modified datetime field.
+def set_lock(year, quarter, user, pwd):
+    sql_set_lock = '''
+        update plan_status 
+        set 
+            status = 'L',
+            modifieddatetime = current_timestamp,
+            author = current_user
+        where
+            quarterid = %(year)s || '.' || %(quarter_yr)s and 
+            country in (
+                select country from country_managers 
+                where username = current_user 
+            ) and 
+        status = 'R';'''
+
+    with psycopg2.connect(dbname=db_name, user=user, password=pwd, host=db_host, port=db_port) as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(sql_set_lock,    {'quarter_yr': quarter, 'year': year})
+
+            except Exception as err:
+                print(f'Error: {err}')
+
+                # rollback the previous transaction before starting another
+                conn.rollback()
+
+                return False
+
+            else:
+                conn.commit()
+
+    return True
+```
+
+```python
+# remove_lock(year, quarter, user, pwd) function, that will change the
+# planning data status from L to R. associated with the current user through
+# the country_managers table. Write a change time stamp in the modified datetime field.
+def remove_lock(year, quarter, user, pwd):
+    sql_remove_lock = '''
+        update plan_status 
+        set 
+            status = 'R',
+            modifieddatetime = current_timestamp,
+            author = current_user
+        where
+            quarterid = %(year)s || '.' || %(quarter_yr)s and 
+            country in (
+                select country from country_managers 
+                where username = current_user 
+            ) and 
+        status = 'L';'''
+
+    with psycopg2.connect(dbname=db_name, user=user, password=pwd, host=db_host, port=db_port) as conn:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(sql_remove_lock,    {'quarter_yr': quarter, 'year': year})
+
+            except Exception as err:
+                print(f'Error: {err}')
+
+                # rollback the previous transaction before starting another
+                conn.rollback()
+
+                return False
+
+            else:
+                conn.commit()
+
+    return True
+```
