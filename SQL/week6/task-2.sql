@@ -1,9 +1,11 @@
 --drop materialized view if exists product2;
-
 --select * from product p;
 --select * from productcategory p;
 --select * from productsubcategory p;
 --select * from address a;
+
+
+
 
 
 /* The ‘product2’ view should contain the product and its category. */
@@ -26,7 +28,6 @@ refresh materialized view product2;
 
 
 --drop materialized view if exists country2;
-
 --select * from address a2;
 --select * from customeraddress c;
 --select * from customer c;
@@ -36,7 +37,6 @@ refresh materialized view product2;
  * join address a on ca.addressid = a.addressid
  * where ca.addresstype = 'Main Office';
  */
-
 
 /* The ‘country2’ view should be filled with unique codes of the countries 
  * where the shops are located (the type of address is Main Office). */

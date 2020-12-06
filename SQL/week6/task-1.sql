@@ -24,7 +24,8 @@ grant select on country_managers to planmanager;
 grant select, update on v_plan_edit to planmanager;
 grant select on v_plan to planmanager;
 
-create user ivan;
+drop user ivan;
+create user ivan with password 'ivan_pwd';
 grant planadmin to ivan;
 
 create user sophie;

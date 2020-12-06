@@ -4,6 +4,9 @@
 --select * from address a;
 
 
+
+
+
 /* In the current database the customer table contains information about two 
  * categories of buyers - individuals and companies. However, we consider only companies. 
  * For the convenience of further development, fill the company table with data.

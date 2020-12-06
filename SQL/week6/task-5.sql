@@ -2,7 +2,14 @@
 --select * from company_abc ca;
 --select * from salesorderdetail sod;
 --select * from salesorderheader s;
+--truncate table company_sales;
 
+
+
+
+
+/* Calculate quarterly sales amount before taxes in 2012 and 2013 individually. Fill the company_sales 
+ * table using data about orders, companies, and classification results in the respective year. */
 
 insert into company_sales (cid, salesamt, year, quarter_yr, categoryid, ccls, qr)
 	select 
