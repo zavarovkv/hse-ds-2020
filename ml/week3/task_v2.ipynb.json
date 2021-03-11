@@ -1,0 +1,2958 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 2973,
+     "status": "ok",
+     "timestamp": 1607721366876,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "8_RV4TjiX9ek",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "38e33a35089d877704c3c9031e2bb0a7",
+     "grade": false,
+     "grade_id": "load",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "import os\n",
+    "\n",
+    "import warnings\n",
+    "warnings.filterwarnings(\"ignore\")\n",
+    "\n",
+    "pd.set_option('display.max_columns', 100) # set to larger value to see all the columns of pd.DF"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "id": "gRbVNiv_X9el",
+    "nbgrader": {
+     "cell_type": "markdown",
+     "checksum": "c756717bce4ffc4bbdfba12601ab6bd3",
+     "grade": false,
+     "grade_id": "toc",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "source": [
+    "\n",
+    "This is programming assignment for week 3. In this assignment you will be practicing with feature selection and hyperparameters tuning. \n",
+    "\n",
+    "Please, read all the notebook carefully and make sure that you understand not only the task, but the whole pipeline.\n",
+    "\n",
+    "### Grading\n",
+    "The assignemnt is automatically graded. \n",
+    "\n",
+    "**Automatic grading**\n",
+    "After you finish solving all the tasks restart the kernel (`kernel -> restart`) and click the button `Validate` to check that everything works as expected. Afterwards, you can submit your work.\n",
+    "\n",
+    "\n",
+    "# Table of Contents:\n",
+    "* [Problem 1.](#part1)  Feature selection\n",
+    "     - [Task 1](#task1) [1 pt]\n",
+    "     - [Task 2](#task2) [1 pts]\n",
+    "     - [Task 3](#task3) [2 pts]\n",
+    "     - [Task 4](#task4) [1 pt]\n",
+    "     - [Task 5](#task5) [1 pts]\n",
+    "     - [Task 6](#task6) [2 pts]\n",
+    "     - [Task 7](#task7) [1 pts]\n",
+    "   \n",
+    "* [Problem 2](#part2). Hyperparameters Tuning\n",
+    "    - [Task 1](#task2_1) [1 pts]\n",
+    "    - [Task 2](#task2_2) [1 pts]\n",
+    "\n",
+    "\n",
+    "\n",
+    "## Problem 1. Feature selection  <a class=\"anchor\" id=\"part1\"></a>\n",
+    "---"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "y2BPpghrgR7U"
+   },
+   "source": [
+    "We will work with a Mercedes-Benz Greener Manufacturing dataset and try different feature engineering, feature selection and dimensionality reduction techniques to predict the time Mercedes-Benz cars spend on the test bench.\n",
+    "\n",
+    "First, let's load the data and take a look at the dataset. Target variable to predict is y, the time for testing the car in seconds. We will exclude it from the feature set, as well as a column with unique car id, and split the dataset into training and validation samples."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/",
+     "height": 253
+    },
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 1753,
+     "status": "ok",
+     "timestamp": 1607721368558,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "AjtuTrQCX9el",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "6809092a7a71cb54f9380e828ca2b782",
+     "grade": false,
+     "grade_id": "load_data",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    },
+    "outputId": "ef11bd36-9fff-427e-a14e-f29b8b8dcb45"
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>ID</th>\n",
+       "      <th>y</th>\n",
+       "      <th>X0</th>\n",
+       "      <th>X1</th>\n",
+       "      <th>X2</th>\n",
+       "      <th>X3</th>\n",
+       "      <th>X4</th>\n",
+       "      <th>X5</th>\n",
+       "      <th>X6</th>\n",
+       "      <th>X8</th>\n",
+       "      <th>X10</th>\n",
+       "      <th>X11</th>\n",
+       "      <th>X12</th>\n",
+       "      <th>X13</th>\n",
+       "      <th>X14</th>\n",
+       "      <th>X15</th>\n",
+       "      <th>X16</th>\n",
+       "      <th>X17</th>\n",
+       "      <th>X18</th>\n",
+       "      <th>X19</th>\n",
+       "      <th>X20</th>\n",
+       "      <th>X21</th>\n",
+       "      <th>X22</th>\n",
+       "      <th>X23</th>\n",
+       "      <th>X24</th>\n",
+       "      <th>X26</th>\n",
+       "      <th>X27</th>\n",
+       "      <th>X28</th>\n",
+       "      <th>X29</th>\n",
+       "      <th>X30</th>\n",
+       "      <th>X31</th>\n",
+       "      <th>X32</th>\n",
+       "      <th>X33</th>\n",
+       "      <th>X34</th>\n",
+       "      <th>X35</th>\n",
+       "      <th>X36</th>\n",
+       "      <th>X37</th>\n",
+       "      <th>X38</th>\n",
+       "      <th>X39</th>\n",
+       "      <th>X40</th>\n",
+       "      <th>X41</th>\n",
+       "      <th>X42</th>\n",
+       "      <th>X43</th>\n",
+       "      <th>X44</th>\n",
+       "      <th>X45</th>\n",
+       "      <th>X46</th>\n",
+       "      <th>X47</th>\n",
+       "      <th>X48</th>\n",
+       "      <th>X49</th>\n",
+       "      <th>X50</th>\n",
+       "      <th>...</th>\n",
+       "      <th>X335</th>\n",
+       "      <th>X336</th>\n",
+       "      <th>X337</th>\n",
+       "      <th>X338</th>\n",
+       "      <th>X339</th>\n",
+       "      <th>X340</th>\n",
+       "      <th>X341</th>\n",
+       "      <th>X342</th>\n",
+       "      <th>X343</th>\n",
+       "      <th>X344</th>\n",
+       "      <th>X345</th>\n",
+       "      <th>X346</th>\n",
+       "      <th>X347</th>\n",
+       "      <th>X348</th>\n",
+       "      <th>X349</th>\n",
+       "      <th>X350</th>\n",
+       "      <th>X351</th>\n",
+       "      <th>X352</th>\n",
+       "      <th>X353</th>\n",
+       "      <th>X354</th>\n",
+       "      <th>X355</th>\n",
+       "      <th>X356</th>\n",
+       "      <th>X357</th>\n",
+       "      <th>X358</th>\n",
+       "      <th>X359</th>\n",
+       "      <th>X360</th>\n",
+       "      <th>X361</th>\n",
+       "      <th>X362</th>\n",
+       "      <th>X363</th>\n",
+       "      <th>X364</th>\n",
+       "      <th>X365</th>\n",
+       "      <th>X366</th>\n",
+       "      <th>X367</th>\n",
+       "      <th>X368</th>\n",
+       "      <th>X369</th>\n",
+       "      <th>X370</th>\n",
+       "      <th>X371</th>\n",
+       "      <th>X372</th>\n",
+       "      <th>X373</th>\n",
+       "      <th>X374</th>\n",
+       "      <th>X375</th>\n",
+       "      <th>X376</th>\n",
+       "      <th>X377</th>\n",
+       "      <th>X378</th>\n",
+       "      <th>X379</th>\n",
+       "      <th>X380</th>\n",
+       "      <th>X382</th>\n",
+       "      <th>X383</th>\n",
+       "      <th>X384</th>\n",
+       "      <th>X385</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>130.81</td>\n",
+       "      <td>k</td>\n",
+       "      <td>v</td>\n",
+       "      <td>at</td>\n",
+       "      <td>a</td>\n",
+       "      <td>d</td>\n",
+       "      <td>u</td>\n",
+       "      <td>j</td>\n",
+       "      <td>o</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>6</td>\n",
+       "      <td>88.53</td>\n",
+       "      <td>k</td>\n",
+       "      <td>t</td>\n",
+       "      <td>av</td>\n",
+       "      <td>e</td>\n",
+       "      <td>d</td>\n",
+       "      <td>y</td>\n",
+       "      <td>l</td>\n",
+       "      <td>o</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>7</td>\n",
+       "      <td>76.26</td>\n",
+       "      <td>az</td>\n",
+       "      <td>w</td>\n",
+       "      <td>n</td>\n",
+       "      <td>c</td>\n",
+       "      <td>d</td>\n",
+       "      <td>x</td>\n",
+       "      <td>j</td>\n",
+       "      <td>x</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>9</td>\n",
+       "      <td>80.62</td>\n",
+       "      <td>az</td>\n",
+       "      <td>t</td>\n",
+       "      <td>n</td>\n",
+       "      <td>f</td>\n",
+       "      <td>d</td>\n",
+       "      <td>x</td>\n",
+       "      <td>l</td>\n",
+       "      <td>e</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>13</td>\n",
+       "      <td>78.02</td>\n",
+       "      <td>az</td>\n",
+       "      <td>v</td>\n",
+       "      <td>n</td>\n",
+       "      <td>f</td>\n",
+       "      <td>d</td>\n",
+       "      <td>h</td>\n",
+       "      <td>d</td>\n",
+       "      <td>n</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>5 rows × 378 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   ID       y  X0 X1  X2 X3 X4 X5 X6 X8  X10  X11  X12  X13  X14  X15  X16  \\\n",
+       "0   0  130.81   k  v  at  a  d  u  j  o    0    0    0    1    0    0    0   \n",
+       "1   6   88.53   k  t  av  e  d  y  l  o    0    0    0    0    0    0    0   \n",
+       "2   7   76.26  az  w   n  c  d  x  j  x    0    0    0    0    0    0    0   \n",
+       "3   9   80.62  az  t   n  f  d  x  l  e    0    0    0    0    0    0    0   \n",
+       "4  13   78.02  az  v   n  f  d  h  d  n    0    0    0    0    0    0    0   \n",
+       "\n",
+       "   X17  X18  X19  X20  X21  X22  X23  X24  X26  X27  X28  X29  X30  X31  X32  \\\n",
+       "0    0    1    0    0    1    0    0    0    0    0    0    0    0    1    0   \n",
+       "1    0    1    0    0    0    0    0    0    0    1    0    0    0    1    0   \n",
+       "2    1    0    0    0    0    0    0    0    0    1    1    1    0    1    0   \n",
+       "3    0    0    0    0    0    0    0    0    0    1    1    1    0    1    0   \n",
+       "4    0    0    0    0    0    0    0    0    0    1    1    1    0    1    0   \n",
+       "\n",
+       "   X33  X34  X35  X36  X37  X38  X39  X40  X41  X42  X43  X44  X45  X46  X47  \\\n",
+       "0    0    0    1    0    1    0    0    0    0    0    0    0    0    1    0   \n",
+       "1    0    0    1    0    1    0    0    0    0    0    0    0    0    0    0   \n",
+       "2    0    0    1    0    1    0    0    0    0    0    1    0    0    1    0   \n",
+       "3    0    0    1    0    1    0    0    0    0    0    1    0    0    1    0   \n",
+       "4    0    0    1    0    1    0    0    0    0    0    1    0    0    1    0   \n",
+       "\n",
+       "   X48  X49  X50  ...  X335  X336  X337  X338  X339  X340  X341  X342  X343  \\\n",
+       "0    0    0    0  ...     0     0     0     0     0     0     0     0     0   \n",
+       "1    0    0    0  ...     0     1     1     0     0     0     0     0     0   \n",
+       "2    0    0    0  ...     0     0     0     0     0     0     0     0     0   \n",
+       "3    0    0    0  ...     0     0     0     0     0     0     0     0     0   \n",
+       "4    0    0    0  ...     0     0     0     0     0     0     0     0     0   \n",
+       "\n",
+       "   X344  X345  X346  X347  X348  X349  X350  X351  X352  X353  X354  X355  \\\n",
+       "0     0     0     0     0     0     0     0     0     0     0     1     0   \n",
+       "1     0     0     0     0     1     0     0     0     0     0     0     0   \n",
+       "2     0     0     0     0     1     0     1     0     0     0     1     0   \n",
+       "3     0     0     0     0     1     0     1     0     0     0     0     0   \n",
+       "4     0     0     0     0     1     0     1     0     0     0     0     0   \n",
+       "\n",
+       "   X356  X357  X358  X359  X360  X361  X362  X363  X364  X365  X366  X367  \\\n",
+       "0     0     0     0     0     0     1     0     0     0     0     0     0   \n",
+       "1     0     0     0     0     0     1     0     1     0     0     0     0   \n",
+       "2     0     0     1     0     0     1     0     1     0     0     0     0   \n",
+       "3     0     0     1     0     0     1     0     1     0     0     0     0   \n",
+       "4     0     0     1     0     0     1     0     1     0     0     0     0   \n",
+       "\n",
+       "   X368  X369  X370  X371  X372  X373  X374  X375  X376  X377  X378  X379  \\\n",
+       "0     0     0     0     0     0     0     0     0     0     1     0     0   \n",
+       "1     0     0     0     0     0     0     0     1     0     0     0     0   \n",
+       "2     0     0     0     0     0     0     0     0     0     0     0     0   \n",
+       "3     0     0     0     0     1     0     0     0     0     0     0     0   \n",
+       "4     0     0     0     1     0     0     0     0     0     0     0     0   \n",
+       "\n",
+       "   X380  X382  X383  X384  X385  \n",
+       "0     0     0     0     0     0  \n",
+       "1     0     0     0     0     0  \n",
+       "2     0     1     0     0     0  \n",
+       "3     0     0     0     0     0  \n",
+       "4     0     0     0     0     0  \n",
+       "\n",
+       "[5 rows x 378 columns]"
+      ]
+     },
+     "execution_count": 78,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "file_path = \"train_mercedes.csv\"\n",
+    "df = pd.read_csv(file_path)\n",
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {
+    "executionInfo": {
+     "elapsed": 1620,
+     "status": "ok",
+     "timestamp": 1607721368559,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "nIOM1uRFX9em"
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.model_selection import train_test_split\n",
+    "\n",
+    "y = df[\"y\"]\n",
+    "X = df.drop([\"ID\", \"y\"], axis=1)\n",
+    "\n",
+    "X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "a6FJ-WcZX9em"
+   },
+   "source": [
+    "---"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "id": "ajnwJ46yIvQu",
+    "nbgrader": {
+     "cell_type": "markdown",
+     "checksum": "922cacf512c0cf03b5114b2e69a5a610",
+     "grade": false,
+     "grade_id": "baseline",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "source": [
+    "### Baseline model\n",
+    "\n",
+    "As we can see from a simple exploratory analysis, this dataset contains only categorical and ordinal features. Also, there are no missing values in any features. \n",
+    "\n",
+    "Thus, as a very first baseline model, we can just one-hot encode categorical variables and apply linear regression with $l_2$-regularization to predict target variable. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "executionInfo": {
+     "elapsed": 679,
+     "status": "ok",
+     "timestamp": 1607721372598,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "vMgmeatqItf2",
+    "outputId": "a89aa0a8-d865-49c8-8ef7-a4e562228933"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of binary features = 368\n",
+      "Number of categorical features = 8\n"
+     ]
+    }
+   ],
+   "source": [
+    "bin_cols = X_tr.columns[X_tr.dtypes == \"int64\"].tolist() \n",
+    "print(\"Number of binary features =\", len(bin_cols))\n",
+    "cat_cols = X_tr.columns[X_tr.dtypes == \"object\"].tolist()\n",
+    "print(\"Number of categorical features =\", len(cat_cols))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 81,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "executionInfo": {
+     "elapsed": 690,
+     "status": "ok",
+     "timestamp": 1607721372904,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "Lk2URmX4KHEM",
+    "outputId": "d6c6d665-d40f-4e5c-a89d-442b0c434e64"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of columns with any missing values:\n",
+      "0\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Number of columns with any missing values:\")\n",
+    "print(X_tr.isnull().any(axis=0).sum())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "FlVc8ZgdxxC2"
+   },
+   "source": [
+    "\n",
+    "---\n",
+    "**Task 1.1** [1 pt] <a class=\"anchor\" id=\"task1\"></a>\n",
+    "\n",
+    "We will evaluate model prediciton quality with $R^2$-score metric. Implement a function to evaluate performance of a given model both on the train and test sets. The function should\n",
+    "- take as input a model (possibly a pipeline), as well as feature matrix and target variable for both train and test sets,\n",
+    "- fit the model on the train set,\n",
+    "- compute model predictions for train and test sets,\n",
+    "- assess the quality of both predictions with $R^2$ score,\n",
+    "- return train and test $R^2$ scores."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 82,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 638,
+     "status": "ok",
+     "timestamp": 1607721381787,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "72CxGkHoLCwV",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "20f9e855395dc0a2eaf60d9aa424527a",
+     "grade": false,
+     "grade_id": "task1",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.pipeline import Pipeline\n",
+    "from sklearn.metrics import r2_score\n",
+    "\n",
+    "def evaluate_model(model, X_tr, y_tr, X_te, y_te):\n",
+    "    # set a fixed random seed for model weights initialization \n",
+    "    # to obtain reproducible results.\n",
+    "    # Do not change the value.\n",
+    "    if isinstance(model, Pipeline):\n",
+    "        model.set_params(estimator__random_state=0);    \n",
+    "    else:\n",
+    "        model.set_params(random_state=0);    \n",
+    "\n",
+    "    # your code here\n",
+    "\n",
+    "    model.fit(X_tr, y_tr)\n",
+    "    \n",
+    "    y_tr_pred = model.predict(X_tr)\n",
+    "    y_te_pred = model.predict(X_te)\n",
+    "    \n",
+    "    R2_tr = r2_score(y_tr, y_tr_pred)\n",
+    "    R2_te = r2_score(y_te, y_te_pred)\n",
+    "    \n",
+    "    return R2_tr, R2_te"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 83,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 715,
+     "status": "ok",
+     "timestamp": 1607722076758,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "PLcVoilpqdnJ",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "a1bc43ad2fe405d512b23e8c24d210a2",
+     "grade": true,
+     "grade_id": "cell-task1_test",
+     "locked": true,
+     "points": 1,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "R2 on train: 0.03454859974270774\n",
+      "R2 on test: -0.02162045646924393\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn.linear_model import Ridge\n",
+    "# TEST evaluate_model \n",
+    "res = evaluate_model(Ridge(), X_tr.iloc[:100, 10:11], y_tr[:100], X_tr.iloc[100:150, 10:11], y_tr[100:150])\n",
+    "print('R2 on train:', res[0])\n",
+    "print('R2 on test:', res[1])\n",
+    "\n",
+    "assert np.allclose(\n",
+    "    np.round(evaluate_model(Ridge(), \n",
+    "                            X_tr.values[:100, 8:16], y_tr.values[:100],\n",
+    "                            X_tr.values[100:150, 8:16], y_tr.values[100:150]), 3), \n",
+    "    [0.136, 0.094]\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "FEt2ZvtshUDl"
+   },
+   "source": [
+    "\n",
+    "---\n",
+    "**Task 1.2** [1 pt] <a class=\"anchor\" id=\"task2\"></a>\n",
+    "\n",
+    "Initialize the baseline model. It should represent a pipeline including ohe-hot encoding of categorical variables and a `Ridge` regression (`sklearn` imlementation of linear regression with $l_2$ regularization) model with default parameters. \n",
+    "\n",
+    "- create `col_transformer` - ColumnTransformer pipeline with a single transformer - `OneHotEncoder` applied to categorical columns (**cat_cols**) only. To keep other (binary) features, use `remainder=passthrough` argument of `ColumnTransformer`.\n",
+    "- create `model` - Pipeline with two steps:\n",
+    "    - **col_transformer** you created before (used to encode categorical features)\n",
+    "    - **estimator** should be a `Ridge` regression with default parameters. *Please, make sure that this step is named exactly **estimator**. It will be used in the latter tasks.* "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 84,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 644,
+     "status": "ok",
+     "timestamp": 1607721801263,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "Lvm4m9BVLCwW",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "8dec42043f3aaf73e7b3f8d673881bc3",
+     "grade": false,
+     "grade_id": "cell-f8f2dd66042265d0",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.compose import ColumnTransformer\n",
+    "from sklearn.preprocessing import OneHotEncoder\n",
+    "\n",
+    "# your code here\n",
+    "col_transformer = ColumnTransformer([\n",
+    "    ('ohe', OneHotEncoder(handle_unknown=\"ignore\"), cat_cols),\n",
+    "], remainder='passthrough')\n",
+    "\n",
+    "model = Pipeline([\n",
+    "    ('col_transformer', col_transformer),\n",
+    "    ('estimator', Ridge())\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 85,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 608,
+     "status": "ok",
+     "timestamp": 1607721935153,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "Cvj0XjXFk3OQ",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "992b47744f6ee854236bfe6b2fb50838",
+     "grade": true,
+     "grade_id": "cell-0822a1056ab386e0",
+     "locked": true,
+     "points": 1,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Column transformers:\n",
+      "[('ohe', OneHotEncoder(categories='auto', drop=None, dtype=<class 'numpy.float64'>,\n",
+      "              handle_unknown='ignore', sparse=True), ['X0', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X8'])]\n",
+      "Pipeline:\n",
+      "('col_transformer', ColumnTransformer(n_jobs=None, remainder='passthrough', sparse_threshold=0.3,\n",
+      "                  transformer_weights=None,\n",
+      "                  transformers=[('ohe',\n",
+      "                                 OneHotEncoder(categories='auto', drop=None,\n",
+      "                                               dtype=<class 'numpy.float64'>,\n",
+      "                                               handle_unknown='ignore',\n",
+      "                                               sparse=True),\n",
+      "                                 ['X0', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6',\n",
+      "                                  'X8'])],\n",
+      "                  verbose=False))\n",
+      "('estimator', Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,\n",
+      "      normalize=False, random_state=None, solver='auto', tol=0.001))\n"
+     ]
+    }
+   ],
+   "source": [
+    "# TEST baseline model\n",
+    "print('Column transformers:')\n",
+    "print(col_transformer.transformers)\n",
+    "\n",
+    "print('Pipeline:')\n",
+    "print(model.steps[0])\n",
+    "print(model.steps[1])\n",
+    "\n",
+    "# test transformers \n",
+    "assert len(col_transformer.transformers) == 1, 'col_transformer should exactly 1 transformation'\n",
+    "assert isinstance(col_transformer.transformers[0][1], OneHotEncoder), 'col_transformer should use OneHotEncoder'\n",
+    "assert set(col_transformer.transformers[0][2]) == set(cat_cols), 'col_transformer should be applied to all cat_cols'\n",
+    "\n",
+    "# test model pipeline\n",
+    "assert isinstance(model.steps[0][1], ColumnTransformer), 'First step of the pipeline should be columns transformer'\n",
+    "assert model.steps[1][0]=='estimator', 'Second step of the pipeline should be named \"estimator\"'\n",
+    "assert isinstance(model.steps[1][1], Ridge), 'Second step of the pipeline should be Ridge regression'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "Pi2i654rkggV"
+   },
+   "source": [
+    "Now we can evaluate the baseline model performance:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 86,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 640,
+     "status": "ok",
+     "timestamp": 1607721936742,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "rLGaH_1bkgBm",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "51931e59368a66e0e72fa83022c772d1",
+     "grade": false,
+     "grade_id": "cell-bd6d504241fec606",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    },
+    "outputId": "145bd0b2-9981-45d1-f01b-69c25b0beaed"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train R2 = 0.62\n",
+      "Test R2 = 0.57\n"
+     ]
+    }
+   ],
+   "source": [
+    "R2_tr, R2_te = evaluate_model(model, X_tr, y_tr, X_te, y_te)\n",
+    "print(\"Train R2 = %.2f\" % R2_tr)\n",
+    "print(\"Test R2 = %.2f\" % R2_te)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "X8oKwF-86BDb"
+   },
+   "source": [
+    "As we can see, model performance on the training set is slightly higher than on the test data. This can mean that there is overfitting, which is especially likely when number of features is large."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 87,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 971,
+     "status": "ok",
+     "timestamp": 1607696670490,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "-icV7Z3VLYJG",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "ce6a16547a7d4c9c43f15ad527e9be4b",
+     "grade": false,
+     "grade_id": "cell-765bc409fa568008",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    },
+    "outputId": "e25af6ba-944f-4f7d-afba-f5bae6949557"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of features before one-hot-encoding: \n",
+      "376\n",
+      "\n",
+      "Number of features after one-hot-encoding: \n",
+      "560\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Number of features before one-hot-encoding: \")\n",
+    "print(X_tr.shape[1])\n",
+    "print()\n",
+    "print(\"Number of features after one-hot-encoding: \")\n",
+    "print(col_transformer.fit_transform(X_tr).shape[1])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "lmFHxU_23l0w"
+   },
+   "source": [
+    "\n",
+    "As we can see, there were quite a lot of features in the original sample, and after the one-hot encoding of categorical variables, their number increased by almost one and a half times.\n",
+    "\n",
+    "\n",
+    "To avoid overfitting, it can be helpful to reduce the number of variables by selecting the most important ones. In our sample, all the variables are anonymized. However we can still select the most relevant based not on their physical meaning, but on their observed predictive power and informativeness for the model."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "id": "rs_iw64OMKXs",
+    "nbgrader": {
+     "cell_type": "markdown",
+     "checksum": "f458122bafda4a67fc1029de76bfd38a",
+     "grade": false,
+     "grade_id": "cell-105edfbad47a5ceb",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "source": [
+    "### Filter-based methods\n",
+    "<!-- ### Univariate feature selection (filter-based methods) -->\n",
+    "\n",
+    "The most simple group of feature selection approaches are filter-based methods or univariate feature selection. These methods are based on analysis of individual predictive power of each variable. In our case, since we have a regression problem, we can simply check the correlation of each feature with the target variable. \n",
+    "\n",
+    "In `sklearn`, you can find a ready-to-use implementation of univariate feature selection algorithm - `SelectKBest` transformer, which filters out a set of **k** features basen on the values of **scoring function**. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "a3p7nq4q8x2f"
+   },
+   "source": [
+    "\n",
+    "---\n",
+    "**Task 1.3** [2 pts] <a class=\"anchor\" id=\"task3\"></a>\n",
+    "\n",
+    "Implement a function to compute absolute value of correlation of each feature variable with the target variable.\n",
+    " The function should:\n",
+    "- take as input the feature matrix and the target variable,\n",
+    "- compute correlation coefficient of each feature in the feature matrix and the target variable,\n",
+    "- return a vector of correlation coefficient for all features in the dataset."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 624,
+     "status": "ok",
+     "timestamp": 1607722001251,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "DjeTNCs8OneF",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "d6265b6039adfd23e2f597a6ae522c4d",
+     "grade": false,
+     "grade_id": "cell-e3e09dda53672211",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def get_abs_corr_coef(X, y):\n",
+    "    \"\"\"\n",
+    "    Compute\n",
+    "\n",
+    "    Parameters\n",
+    "    ----------\n",
+    "    X : numpy.ndarray of shape (n_samples, n_features)\n",
+    "        Feature matrix.\n",
+    "    y : numpy.ndarray of shape (n_samples,)\n",
+    "        Target variable\n",
+    "    \n",
+    "    Returns\n",
+    "    -------\n",
+    "    corr_coefs : numpy.ndarray of shape (n_features,)\n",
+    "        Vector of absolute values of correlation coefficients \n",
+    "        for all features\n",
+    "    \"\"\"\n",
+    "    # your code here\n",
+    "    coefs = np.corrcoef(X, y, rowvar=False)\n",
+    "    corr_coefs = np.absolute(coefs[:,-1][:-1])\n",
+    "\n",
+    "    return corr_coefs"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 89,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 661,
+     "status": "ok",
+     "timestamp": 1607722001498,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "Y4BSisDsVR96",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "b45e2e4b95dfa272f3eabd9ee280c938",
+     "grade": true,
+     "grade_id": "cell-8a3ad3d3ffaf0ab6",
+     "locked": true,
+     "points": 2,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[1.        0.8660254 0.8660254]\n"
+     ]
+    }
+   ],
+   "source": [
+    "# TEST get_abs_corr_coef\n",
+    "A = np.array(\n",
+    "    [[1, 0, 0],\n",
+    "     [0, 0.5, -0.5],\n",
+    "     [0, 1, -1]]\n",
+    ")\n",
+    "b = [0, 1, 1]\n",
+    "print(get_abs_corr_coef(A, b))\n",
+    "\n",
+    "A = np.array(\n",
+    "    [[1, 0, 0],\n",
+    "     [0, 0.5, -0.5],\n",
+    "     [0, 1, -1]]\n",
+    ")\n",
+    "b = [0, 1, 1]\n",
+    "corr = get_abs_corr_coef(A, b)\n",
+    "assert len(corr) == 3, 'Length of the outut vector should be equal to the number of features'\n",
+    "assert np.all(corr >= 0), 'Function should return absolute values'\n",
+    "assert np.allclose(corr, [1.       ,  0.86603, 0.86603]), 'Correlations are not computed correctly'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "QSEpixMc-wFM"
+   },
+   "source": [
+    "Now we can check how model performance changes if we use only `k=60` variables with strongest correlation (both positive and negative) with the target variable."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "D-uNETMVlcpT"
+   },
+   "source": [
+    "\n",
+    "---\n",
+    "**Task 1.4** [1 pt] <a class=\"anchor\" id=\"task4\"></a>\n",
+    "\n",
+    "Initialize the model with filter-based feature selection. \n",
+    "\n",
+    "\n",
+    "Create `model_k_best` - Pipeline with three steps:\n",
+    "- **col_transformer** that you've created in task 1.2\n",
+    "- **feat_selector**  - `SelectKBest` transformer. It should use `get_abs_corr_coef` scoring function to select `30` features. \n",
+    "- **estimator** - `Ridge` regression with default parameters. *Please, make sure that this step is named exactly **estimator**. It will be used in the latter tasks.*"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 90,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 692,
+     "status": "ok",
+     "timestamp": 1607722245073,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "A-Hjogvtlcpz",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "da42e68e6f22381ccf1a5330b0004b40",
+     "grade": false,
+     "grade_id": "cell-88ffd9297ff3d54b",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.feature_selection import SelectKBest\n",
+    "\n",
+    "feat_selector = SelectKBest(get_abs_corr_coef, k=20)\n",
+    "# your code here\n",
+    "model_k_best = Pipeline([\n",
+    "    ('col_transformer', col_transformer),\n",
+    "    ('feat_selector', feat_selector),\n",
+    "    ('estimator', Ridge()),\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 91,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 692,
+     "status": "ok",
+     "timestamp": 1607722246332,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "4QF7OVgelcp1",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "d9fcabebff1c7a635bfcad332abf18ee",
+     "grade": true,
+     "grade_id": "cell-e584763198adafe0",
+     "locked": true,
+     "points": 1,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Pipeline:\n",
+      "('col_transformer', ColumnTransformer(n_jobs=None, remainder='passthrough', sparse_threshold=0.3,\n",
+      "                  transformer_weights=None,\n",
+      "                  transformers=[('ohe',\n",
+      "                                 OneHotEncoder(categories='auto', drop=None,\n",
+      "                                               dtype=<class 'numpy.float64'>,\n",
+      "                                               handle_unknown='ignore',\n",
+      "                                               sparse=True),\n",
+      "                                 ['X0', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6',\n",
+      "                                  'X8'])],\n",
+      "                  verbose=False))\n",
+      "('feat_selector', SelectKBest(k=20, score_func=<function get_abs_corr_coef at 0x7ffb7c2b2a70>))\n",
+      "('estimator', Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,\n",
+      "      normalize=False, random_state=None, solver='auto', tol=0.001))\n"
+     ]
+    }
+   ],
+   "source": [
+    "# TEST model with filter-based feature selection\n",
+    "\n",
+    "\n",
+    "print('Pipeline:')\n",
+    "print(model_k_best.steps[0])\n",
+    "print(model_k_best.steps[1])\n",
+    "print(model_k_best.steps[2])\n",
+    "\n",
+    "# test model pipeline\n",
+    "assert isinstance(model_k_best.steps[0][1], ColumnTransformer), 'First step of the pipeline should be columns transformer'\n",
+    "assert isinstance(model_k_best.steps[1][1], SelectKBest), 'Second step of the pipeline should be SelectKBest'\n",
+    "assert model_k_best.steps[2][0]=='estimator', 'Third step of the pipeline should be named \"estimator\"'\n",
+    "assert isinstance(model_k_best.steps[2][1], Ridge), 'Third step of the pipeline should be Ridge regression'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 92,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "executionInfo": {
+     "elapsed": 569,
+     "status": "ok",
+     "timestamp": 1607722250726,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "FPYmRU8KW-39",
+    "outputId": "260a03c4-6e83-417d-a626-9e8753f80aa6"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train R2 = 0.51\n",
+      "Test R2 = 0.56\n"
+     ]
+    }
+   ],
+   "source": [
+    "R2_tr_kbest, R2_te_kbest = evaluate_model(model_k_best, X_tr, y_tr, X_te, y_te)\n",
+    "print(\"Train R2 = %.2f\" % R2_tr_kbest)\n",
+    "print(\"Test R2 = %.2f\" % R2_te_kbest)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "id": "vVABUorUOryi",
+    "nbgrader": {
+     "cell_type": "markdown",
+     "checksum": "619c1fef8677f8288cfedbb2c5b22954",
+     "grade": false,
+     "grade_id": "wrapper",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "source": [
+    "### Wrapper methods \n",
+    "\n",
+    "In wrapper methods, feature selection process is based on the greedy search.  Different combinations of features are evaluated and compared using the evaluation criterion, which is simply the performance of the trained model, measured with any appropriated score.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "dDtCK21uXBUv"
+   },
+   "source": [
+    "Sklearn has a ready-to-use implementation of a wrapper feature selection algorithm called **Recursive Feature Elimination** (RFE). \n",
+    "\n",
+    "The algorithm works by iteratively eliminating features which turned out to be least important based on their weights (or other importance scores) in the trained model. For instance, if the linear regression is used as a base algorithm in selection process, the model is first trained on the whole feature set. Then, the features with smallest weights (coefficients) are excluded, and the model is re-trained on the remaining feature set. The process is repeated until the desired number of features is reached."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "qIZGHZANm9ks"
+   },
+   "source": [
+    "\n",
+    "---\n",
+    "**Task 1.5** [1 pt] <a class=\"anchor\" id=\"task5\"></a>\n",
+    "\n",
+    "Initialize the model with Recursive Feature Elimination method for feature selection.\n",
+    "\n",
+    "\n",
+    "\n",
+    "Create `model_rfe` - Pipeline with three steps:\n",
+    "- **col_transformer** that you've created in task 1.2\n",
+    "- **feat_selector**  - `RFE` transformer. It should use `Ridge` regression with default parameters as an internal estimator to select `20` features. \n",
+    "- **estimator** - `Ridge` regression with default parameters. \n",
+    "\n",
+    "\n",
+    "*Note, that instance of Ridge regression used in `RFE` transformer should not be the same used as estimator. You need 2 independent instances of th esame model.*"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 93,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 703,
+     "status": "ok",
+     "timestamp": 1607723973492,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "mtzFI_DMOngD",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "5b0f5f5d3d05f16f9b9700e5214c04bc",
+     "grade": false,
+     "grade_id": "cell-868f855ab31ed1c0",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.feature_selection import RFE\n",
+    "\n",
+    "# your code here\n",
+    "model_rfe = Pipeline([\n",
+    "    ('col_transformer', col_transformer),\n",
+    "    ('feat_selector', RFE(Ridge(), n_features_to_select=20)),\n",
+    "    ('estimator', Ridge()),\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 94,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 1180,
+     "status": "ok",
+     "timestamp": 1607723987626,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "-7hz0QGkt1Yn",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "31894ed7449c074a0ec900b02d3d7433",
+     "grade": true,
+     "grade_id": "cell-6ebcf0a3441cdf34",
+     "locked": true,
+     "points": 1,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Pipeline:\n",
+      "('col_transformer', ColumnTransformer(n_jobs=None, remainder='passthrough', sparse_threshold=0.3,\n",
+      "                  transformer_weights=None,\n",
+      "                  transformers=[('ohe',\n",
+      "                                 OneHotEncoder(categories='auto', drop=None,\n",
+      "                                               dtype=<class 'numpy.float64'>,\n",
+      "                                               handle_unknown='ignore',\n",
+      "                                               sparse=True),\n",
+      "                                 ['X0', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6',\n",
+      "                                  'X8'])],\n",
+      "                  verbose=False))\n",
+      "('feat_selector', RFE(estimator=Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,\n",
+      "                    normalize=False, random_state=None, solver='auto',\n",
+      "                    tol=0.001),\n",
+      "    n_features_to_select=20, step=1, verbose=0))\n",
+      "('estimator', Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,\n",
+      "      normalize=False, random_state=None, solver='auto', tol=0.001))\n"
+     ]
+    }
+   ],
+   "source": [
+    "# TEST model with wrapper feature selection\n",
+    "\n",
+    "\n",
+    "print('Pipeline:')\n",
+    "print(model_rfe.steps[0])\n",
+    "print(model_rfe.steps[1])\n",
+    "print(model_rfe.steps[2])\n",
+    "\n",
+    "# test model pipeline\n",
+    "assert isinstance(model_rfe.steps[0][1], ColumnTransformer), 'First step of the pipeline should be columns transformer'\n",
+    "assert isinstance(model_rfe.steps[1][1], RFE), 'Second step of the pipeline should be RFE'\n",
+    "assert isinstance(model_rfe.steps[1][1].estimator, Ridge), 'RFE should use Ridge as an estimator'\n",
+    "assert model_rfe.steps[1][1].n_features_to_select == 20, 'RFE should select 30 features'\n",
+    "assert isinstance(model_rfe.steps[2][1], Ridge), 'Third step of the pipeline should be Ridge regression'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Evaluate the model (it may take some time). "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "executionInfo": {
+     "elapsed": 17918,
+     "status": "ok",
+     "timestamp": 1607724008925,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "2F5bo1o2tyJS",
+    "outputId": "03071ff9-b7c2-4cd2-c776-2cf13d0e2763"
+   },
+   "outputs": [],
+   "source": [
+    "R2_tr_rfe, R2_te_rfe = evaluate_model(model_rfe, X_tr, y_tr, X_te, y_te)\n",
+    "print(\"Train R2 = %.2f\" % R2_tr_rfe)\n",
+    "print(\"Test R2 = %.2f\" % R2_te_rfe)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "kaKQnoatZ8Hx"
+   },
+   "source": [
+    "Two widely used wrapper feature selection approaches a **Forward** and **Backward** sequential feature selection. \n",
+    "\n",
+    "In **Forward feature selection** method, one starts from an empty set of selected features. Then, in each iteration, the feature that improves the model performance most is added to the feature set. The process continues until desired number of features is achieved or an addition of a new feature does not improve the model performance.\n",
+    "\n",
+    "In **Backward feature selection** method, one starts from the set of all features and iteratively removes the feature, the elimination of which improves the model performance most. Again, the process continues until desired number of features is achieved or an elimination of another feature does not improve the model performance.\n",
+    "\n",
+    "In the cases when number of feature is very large, and number of informative ones is expected to be considerably smaller, backward feature selection algorithm can take very long time to converge, and forward feature selection is usually preferred."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "QTvZwVhEKd9d"
+   },
+   "source": [
+    "\n",
+    "---\n",
+    "**Task 1.6** [2 pts] <a class=\"anchor\" id=\"task6\"></a>\n",
+    "\n",
+    "Implement a transformer class to perform forward feature selection of a predefined number of features. \n",
+    "- Start from an **empty** set of **selected features**. \n",
+    "- At each step, train the model on the current set of selected features and one of the yet not selected features - **candidate features**. Score model either on the training, or on validation set and collect model scores for all candidate features.\n",
+    "- Select from candidate features the feature, that improved model performance most, add it to the set of selected features and eliminate from candidate features.\n",
+    "- Repeat until the desired number of selected features is achieved."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 95,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 672,
+     "status": "ok",
+     "timestamp": 1607724272651,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "sSNHOZOLOnh8",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "a141ff985969e5336cc5a91fb5b9ee1f",
+     "grade": false,
+     "grade_id": "cell-412fe35573be7e79",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.base import TransformerMixin, BaseEstimator\n",
+    "\n",
+    "class ForwardFeatureSelection(BaseEstimator, TransformerMixin):\n",
+    "    \"\"\"\n",
+    "    Selects features by iteratively adding the features \n",
+    "    which provides the highest model score.\n",
+    "\n",
+    "    Parameters\n",
+    "    ----------\n",
+    "    estimator : object\n",
+    "        A supervised learning estimator with ``fit`` and ``score`` methods.\n",
+    "    n_features_to_select : int \n",
+    "        The number of features to select.\n",
+    "    \"\"\"\n",
+    "\n",
+    "    def __init__(self, \n",
+    "                 estimator,\n",
+    "                 n_features_to_select,\n",
+    "                ):\n",
+    "        \n",
+    "        self.estimator = estimator\n",
+    "        self.n_features_to_select = n_features_to_select\n",
+    "#         self.score_on_set = score_on_set\n",
+    "    \n",
+    "    def fit(self, X, y):\n",
+    "        \"\"\"\n",
+    "        Perform forward feature selection and save selected feature subset.\n",
+    "\n",
+    "        Parameters\n",
+    "        ----------\n",
+    "        X : pd.DataFrame or numpy.ndarray of shape (n_samples, n_features)\n",
+    "            Feature matrix.\n",
+    "        y : pd.Series or numpy.ndarray of shape (n_samples,) (default : None)\n",
+    "            Target values.\n",
+    "\n",
+    "        Returns\n",
+    "        -------\n",
+    "        self : returns an instance of self.\n",
+    "        \"\"\"\n",
+    "        if type(X) is not np.ndarray:\n",
+    "            X = X.values\n",
+    "        if type(y) is not np.ndarray:\n",
+    "            y = y.values\n",
+    "\n",
+    "        feats_idx = list(range(X.shape[1])) # not yet selected features\n",
+    "        self.selected_feats_idx = [] # selected features\n",
+    "        self.selected_feats_scores = [] # scores of the selected features\n",
+    "\n",
+    "        for it in range(self.n_features_to_select):\n",
+    "            scores = []\n",
+    "            for i in feats_idx: \n",
+    "                # use `self.estimator` to compute score after addition of the feature number `i`\n",
+    "                # your code here\n",
+    "                self.estimator.fit(X[:, self.selected_feats_idx + [i]], y)\n",
+    "                y_pred = self.estimator.predict(X[:, self.selected_feats_idx + [i]])\n",
+    "                score_tr = r2_score(y, y_pred)\n",
+    "                scores.append(score_tr)                \n",
+    "                \n",
+    "            # select feature with thte best score\n",
+    "            best_score_idx = np.argmax(scores)\n",
+    "            self.selected_feats_scores.append(scores[best_score_idx])\n",
+    "            self.selected_feats_idx.append(feats_idx[best_score_idx])\n",
+    "            feats_idx.remove(feats_idx[best_score_idx])\n",
+    "       \n",
+    "        return self\n",
+    "    \n",
+    "    def transform(self, X):\n",
+    "        \"\"\"\n",
+    "        Select features according to precomputed feature subset.\n",
+    "\n",
+    "        Parameters\n",
+    "        ----------\n",
+    "        X : numpy.ndarray of shape (n_samples, n_features)\n",
+    "            Feature matrix.\n",
+    "        \n",
+    "        Returns\n",
+    "        -------\n",
+    "        X_transformed : array-like of shape (n_samples, n_features)\n",
+    "            Transformed feature matrix. \n",
+    "        \"\"\"\n",
+    "        if type(X) is not np.ndarray:\n",
+    "            X = X.values\n",
+    "        # use `self.selected_feats_idx` to select \"the best\" features\n",
+    "        # your code here\n",
+    "        X_transformed = X[:, self.selected_feats_idx]\n",
+    "        \n",
+    "        return X_transformed"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 96,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "id": "xuORZ04REGrK",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "cdb1f3b40edada063911b24241855dc6",
+     "grade": true,
+     "grade_id": "cell-1c220d297c556a99",
+     "locked": true,
+     "points": 2,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Selected columns:\n",
+      "Index(['X314', 'X315'], dtype='object')\n",
+      "[[1 0]\n",
+      " [0 0]\n",
+      " [1 0]\n",
+      " [1 0]\n",
+      " [0 1]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "# TEST ForwardFeatureSelection on toy example\n",
+    "test_data_X = X_tr.iloc[:100, 10:]\n",
+    "test_data_y = y_tr[:100]\n",
+    "\n",
+    "selector = ForwardFeatureSelection(Ridge(), 2)\n",
+    "\n",
+    "# fit\n",
+    "selector.fit(test_data_X, test_data_y)\n",
+    "print('Selected columns:')\n",
+    "print(test_data_X.columns[selector.selected_feats_idx])\n",
+    "\n",
+    "# transform\n",
+    "X_transformed = selector.transform(test_data_X)\n",
+    "print(X_transformed[:5])\n",
+    "\n",
+    "selector = ForwardFeatureSelection(Ridge(random_state=100), 4)\n",
+    "\n",
+    "selector.fit(test_data_X, test_data_y)\n",
+    "selected_4 = selector.selected_feats_idx\n",
+    "assert len(selector.selected_feats_idx) == 4, 'Wong number of features selected'\n",
+    "\n",
+    "selector = ForwardFeatureSelection(Ridge(random_state=100), 2)\n",
+    "selector.fit(test_data_X, test_data_y)\n",
+    "selected_2 = selector.selected_feats_idx\n",
+    "assert set(selected_2) == set(selected_4[:2]), 'Columns are not selected correctly'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "R6slrrhCzlTh"
+   },
+   "source": [
+    "\n",
+    "---\n",
+    "**Task 1.7** [1 pt] <a class=\"anchor\" id=\"task7\"></a>\n",
+    "\n",
+    "Initialize the model with Forward Feature Selection method. \n",
+    "\n",
+    "\n",
+    "\n",
+    "\n",
+    "Create `model_forward` - Pipeline with three steps:\n",
+    "- **col_transformer** that you've created in task 1.2\n",
+    "- **feat_selector**  - `ForwardFeatureSelection` transformer implemented in the previous task. It should use `Ridge` regression with default parameters as an internal estimator to select `20` features. \n",
+    "- **estimator** - `Ridge` regression with default parameters.\n",
+    "\n",
+    "\n",
+    "*Note, that instance of Ridge regression used in `ForwardFeatureSelection` transformer should not be the same used as estimator. You need 2 independent instances of th esame model.*"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 97,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 654,
+     "status": "ok",
+     "timestamp": 1607724641586,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "tiG3lFKb2vhB",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "382481b6eafcec82fe35b106efb97e41",
+     "grade": false,
+     "grade_id": "cell-5c1a5955756166d7",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# your code here\n",
+    "model_forward = Pipeline([\n",
+    "    ('col_transformer', col_transformer),\n",
+    "    ('feat_selector', ForwardFeatureSelection(estimator=Ridge(), n_features_to_select=20)),\n",
+    "    ('estimator', Ridge()),\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 98,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "id": "NjPSz7HH2vhB",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "d60ec1fb332a412536080ade436a772a",
+     "grade": true,
+     "grade_id": "cell-8687020d4055d994",
+     "locked": true,
+     "points": 1,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Pipeline:\n",
+      "('col_transformer', ColumnTransformer(n_jobs=None, remainder='passthrough', sparse_threshold=0.3,\n",
+      "                  transformer_weights=None,\n",
+      "                  transformers=[('ohe',\n",
+      "                                 OneHotEncoder(categories='auto', drop=None,\n",
+      "                                               dtype=<class 'numpy.float64'>,\n",
+      "                                               handle_unknown='ignore',\n",
+      "                                               sparse=True),\n",
+      "                                 ['X0', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6',\n",
+      "                                  'X8'])],\n",
+      "                  verbose=False))\n",
+      "('feat_selector', ForwardFeatureSelection(estimator=Ridge(alpha=1.0, copy_X=True,\n",
+      "                                        fit_intercept=True, max_iter=None,\n",
+      "                                        normalize=False, random_state=None,\n",
+      "                                        solver='auto', tol=0.001),\n",
+      "                        n_features_to_select=20))\n",
+      "('estimator', Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,\n",
+      "      normalize=False, random_state=None, solver='auto', tol=0.001))\n"
+     ]
+    }
+   ],
+   "source": [
+    "# TEST model with ForwardFeatureSelection\n",
+    "\n",
+    "\n",
+    "print('Pipeline:')\n",
+    "print(model_forward.steps[0])\n",
+    "print(model_forward.steps[1])\n",
+    "print(model_forward.steps[2])\n",
+    "\n",
+    "# test model pipeline\n",
+    "assert isinstance(model_forward.steps[0][1], ColumnTransformer), 'First step of the pipeline should be columns transformer'\n",
+    "assert isinstance(model_forward.steps[1][1], ForwardFeatureSelection), 'Second step of the pipeline should be ForwardFeatureSelection'\n",
+    "assert isinstance(model_forward.steps[1][1].estimator, Ridge), 'RFE should use Ridge as an estimator'\n",
+    "assert model_forward.steps[1][1].n_features_to_select == 20, 'RFE should select 30 features'\n",
+    "assert isinstance(model_forward.steps[2][1], Ridge), 'Third step of the pipeline should be Ridge regression'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "5fM9pls72vhC"
+   },
+   "source": [
+    "Evaluate the model (it may take some time). "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "executionInfo": {
+     "elapsed": 36538,
+     "status": "ok",
+     "timestamp": 1607724680751,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "TNI-DSHK2vhC",
+    "outputId": "c8b6b1ab-81c0-4b27-aa95-1eaea1984016"
+   },
+   "outputs": [],
+   "source": [
+    "R2_tr_forward, R2_te_forward = evaluate_model(model_forward, X_tr, y_tr, X_te, y_te)\n",
+    "print(\"Train R2 = %.2f\" % R2_tr_forward)\n",
+    "print(\"Test R2 = %.2f\" % R2_te_forward)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let us see, how the performance of the model was changing."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 99,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 720x360 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "train_scores = [R2_tr, R2_tr_kbest, R2_tr_rfe, R2_tr_forward]\n",
+    "test_scores = [R2_te ,R2_te_kbest, R2_te_rfe, R2_te_forward]\n",
+    "models = ['All features', 'KBest', 'RFE', 'Forward Selection']\n",
+    " \n",
+    "plt.figure(figsize=(10, 5))\n",
+    "plt.plot(train_scores)\n",
+    "plt.plot(test_scores)\n",
+    "plt.scatter(range(len(models)), train_scores, label=\"train\")\n",
+    "plt.scatter(range(len(models)), test_scores, label=\"test\")\n",
+    "plt.xticks(range(len(models)), models, rotation=30)\n",
+    "plt.ylabel(\"Model's R2 score\", fontdict={\"size\" : 12})\n",
+    "plt.title(\"Dependence of model's score on the features selection method\", fontdict={\"size\" : 14})\n",
+    "plt.legend()\n",
+    "plt.grid()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "wUpJ43yOX9en"
+   },
+   "source": [
+    "---\n",
+    "## Problem 2. Model hyperparameter tuning  <a class=\"anchor\" id=\"part2\"></a>\n",
+    "---\n",
+    "\n",
+    "In the previous task, we used Ridge regression with $l_2$ regularization to predict the target variable. The model hyperparameter `alpha` determines the strength of the regularization, but so far we have used its default value ($alpha = 1$), which may be not optimal. \n",
+    "\n",
+    "In addition, different models may require different degrees of regularization, and it would be incorrect to compare their quality with one fixed value. Now we will optimize the degree of regularization of our regression model.\n",
+    "\n",
+    "<!-- Among `sklearn.linear_models`, you can find implementation of the regression models with $l_1$ regularization (`Lasso`), $l_2$ regularization (`Ridge`), as well as their combination (`ElasticNet`). -->\n",
+    "\n",
+    "**Grid search** is commonly used to find the optimal value of the regularization coefficient (and other model hyperparameters). For each combination of hyperparameters, a model is trained, and its performance is measured on a validation set or using cross-validation. The set of hyperparameters at which the model achieves the best validation performance is optimal.\n",
+    "\n",
+    "Note that the test set on which the final model evaluation is performed should not be used as a validation set for hyperparameter tuning. Otherwise, overfitting occurs and the model quality measured on this test set no longer reflects its predictive ability for the new unseen data. \n",
+    "\n",
+    "`Sklearn` has ready-to-use implementation of grid search - `GridSearchCV` estimator.  It evaluates model performance on cross-validation for each hyperparameter set and selects the best model accordingly."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "FL9EO95DX9en"
+   },
+   "source": [
+    "---\n",
+    "**Task 2.1** [1 pt] <a class=\"anchor\" id=\"task2_1\"></a>\n",
+    "\n",
+    "\n",
+    "Use `GridSearchCV` to find optimal $l_2$ regularization coefficient for two models: \n",
+    "1. Baseline pipeline without feature selection (`model` from task 1.2)\n",
+    "2. Pipeline with univariate feature selection (`model_k_best` from task 1.4).\n",
+    "\n",
+    "Then, compare which model is better with optimal hyperparameters.\n",
+    "\n",
+    "- We will use `alphas` - list of regularization coefficient (`estimator__alpha`) to search through. \n",
+    "\n",
+    "- Create two `GridSearchCV` objects \n",
+    "    - `grid_cv` for baseline model \n",
+    "    - `grid_cv_k_best` for model with feature selection. \n",
+    "\n",
+    "- For each model, fit `GridSearchCV` on the whole training set `X_tr`. Optimize $R^2$-score on 3-fold cross-validation. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 100,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 6337,
+     "status": "ok",
+     "timestamp": 1607725003256,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "J9YwXoNOX9en",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "6b1d94f4246bc3203675233678b1ce5d",
+     "grade": false,
+     "grade_id": "cell-a2c6dc9a02792447",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "GridSearchCV(cv=3, error_score=nan,\n",
+       "             estimator=Pipeline(memory=None,\n",
+       "                                steps=[('col_transformer',\n",
+       "                                        ColumnTransformer(n_jobs=None,\n",
+       "                                                          remainder='passthrough',\n",
+       "                                                          sparse_threshold=0.3,\n",
+       "                                                          transformer_weights=None,\n",
+       "                                                          transformers=[('ohe',\n",
+       "                                                                         OneHotEncoder(categories='auto',\n",
+       "                                                                                       drop=None,\n",
+       "                                                                                       dtype=<class 'numpy.float64'>,\n",
+       "                                                                                       handle_unknown='ignore',\n",
+       "                                                                                       sparse=True),\n",
+       "                                                                         ['X0',\n",
+       "                                                                          'X1',\n",
+       "                                                                          'X2',\n",
+       "                                                                          'X3',\n",
+       "                                                                          'X4',\n",
+       "                                                                          'X5'...\n",
+       "                                        Ridge(alpha=1.0, copy_X=True,\n",
+       "                                              fit_intercept=True, max_iter=None,\n",
+       "                                              normalize=False, random_state=0,\n",
+       "                                              solver='auto', tol=0.001))],\n",
+       "                                verbose=False),\n",
+       "             iid='deprecated', n_jobs=None,\n",
+       "             param_grid={'estimator__alpha': array([1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01, 1.e+02, 1.e+03,\n",
+       "       1.e+04])},\n",
+       "             pre_dispatch='2*n_jobs', refit=True, return_train_score=False,\n",
+       "             scoring='r2', verbose=0)"
+      ]
+     },
+     "execution_count": 100,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from sklearn.model_selection import GridSearchCV\n",
+    "alphas = np.logspace(-4, 4, 9)\n",
+    "param_grid = {\n",
+    "    \"estimator__alpha\" : alphas,\n",
+    "}\n",
+    "\n",
+    "# your code here\n",
+    "grid_cv = GridSearchCV(model, param_grid=param_grid, cv=3, scoring='r2')\n",
+    "grid_cv.fit(X_tr, y_tr)\n",
+    "grid_cv_k_best = GridSearchCV(model_k_best, param_grid=param_grid, cv=3, scoring='r2')\n",
+    "grid_cv_k_best.fit(X_tr, y_tr)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 101,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 4880,
+     "status": "ok",
+     "timestamp": 1607725003261,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "DLAhWYYCX9en",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "250424a3ed9138c2bf78ae6eed5bfd2e",
+     "grade": true,
+     "grade_id": "cell-6614804c811b77b5",
+     "locked": true,
+     "points": 1,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# TEST grid_cv model\n",
+    "assert \"estimator__alpha\" in grid_cv.param_grid\n",
+    "assert \"estimator__alpha\" in grid_cv_k_best.param_grid\n",
+    "assert grid_cv.scoring == 'r2'\n",
+    "assert grid_cv_k_best.scoring == 'r2'\n",
+    "\n",
+    "assert (grid_cv.param_grid[\"estimator__alpha\"] == np.logspace(-4, 4, 9)).all()\n",
+    "best = grid_cv.best_estimator_\n",
+    "assert isinstance(best.steps[0][1], ColumnTransformer)\n",
+    "assert isinstance(best.steps[1][1], Ridge)\n",
+    "\n",
+    "best_k = grid_cv_k_best.best_estimator_\n",
+    "assert isinstance(best_k.steps[0][1], ColumnTransformer)\n",
+    "assert isinstance(best_k.steps[1][1], SelectKBest)\n",
+    "assert isinstance(best_k.steps[2][1], Ridge)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "OPS2mq8S32bV"
+   },
+   "source": [
+    "\n",
+    "- Plot the dependence of the models' validation performances on the alpha value and visually compare how the quality of each model depends on the regularization degree."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 102,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/",
+     "height": 402
+    },
+    "executionInfo": {
+     "elapsed": 938,
+     "status": "ok",
+     "timestamp": 1607725015194,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "SbNZdwOeX9en",
+    "outputId": "77d8fc41-5cf8-4169-fc04-c387dd430fcf"
+   },
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Without feature selection:\n",
+      "Optimal alpha  = 100.0000\n",
+      "Optimal R2 score = 0.5273\n",
+      "\n",
+      "With feature selection:\n",
+      "Optimal alpha  = 0.1000\n",
+      "Optimal R2 score = 0.5122\n"
+     ]
+    }
+   ],
+   "source": [
+    "scores = grid_cv.cv_results_['mean_test_score']\n",
+    "plt.plot(alphas, scores, label=\"without feature selection\")\n",
+    "scores_k_best = grid_cv_k_best.cv_results_['mean_test_score']\n",
+    "plt.plot(alphas, scores_k_best, label=\"with feature selection\")\n",
+    "\n",
+    "plt.xscale(\"log\")\n",
+    "plt.xlabel(\"alpha\")\n",
+    "plt.ylabel(\"CV score\")\n",
+    "plt.grid()\n",
+    "plt.legend()\n",
+    "plt.show()\n",
+    "\n",
+    "print(\"Without feature selection:\")\n",
+    "print(\"Optimal alpha  = %.4f\" % grid_cv.best_params_['estimator__alpha'])\n",
+    "print(\"Optimal R2 score = %.4f\" % grid_cv.best_score_)\n",
+    "print()\n",
+    "print(\"With feature selection:\")\n",
+    "print(\"Optimal alpha  = %.4f\" % grid_cv_k_best.best_params_['estimator__alpha'])\n",
+    "print(\"Optimal R2 score = %.4f\" % grid_cv_k_best.best_score_)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "WjpO1JW039Gz"
+   },
+   "source": [
+    "- Select the better model, fix the optimal value of the regularization coefficient, fit it on the training set, and estimate its performance on the test set `X_te`. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 103,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "executionInfo": {
+     "elapsed": 629,
+     "status": "ok",
+     "timestamp": 1607725056089,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "CZsVnlKeX9en",
+    "outputId": "c9915fa5-2a6e-4314-9091-598f611f91fe"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train R2 = 0.51\n",
+      "Test R2 = 0.56\n"
+     ]
+    }
+   ],
+   "source": [
+    "model = grid_cv_k_best.best_estimator_\n",
+    "R2_tr, R2_te = evaluate_model(model, X_tr, y_tr, X_te, y_te)\n",
+    "\n",
+    "print(\"Train R2 = %.2f\" % R2_tr)\n",
+    "print(\"Test R2 = %.2f\" % R2_te)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "vwrTKS-WX9en"
+   },
+   "source": [
+    "Also, we can perform the search of optimal number of selected features `k`. However, the optimal strength of regularization will also depend on the number of selected features, since models with larger number of features usually need stronger regularization. Thus, it is a good idea to perform grid search for two these parameters simultaneously.\n",
+    "\n",
+    "<!-- Also, we can still assume that some of the features generated by the one-hot encoding of categorical variables are redundant. In this case, you may want to use a $l_1$ -regularization, which is more likely to assign exactly zero weights to insignificant variables. Thus, an internal feature selection by importance is performed, and the final model depends on a smaller number of variables.\n",
+    "\n",
+    "Among `sklearn.linear_models`, you can find implementation of the regression models with $l_1$ regularization (`Lasso`), $l_2$ regularization (`Ridge`), as well as their combination (`ElasticNet`). -->"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "z7OFQaRnX9en"
+   },
+   "source": [
+    "---\n",
+    "**Task 2.2** [1pt] <a class=\"anchor\" id=\"task2_2\"></a>\n",
+    "\n",
+    "Perform grid search for 2 hyperparameters to find both optimal **regularization coefficient** value (`alpha`) and **number of features** ($k$) for the pipeline with univariate feature selection (`model_k_best` from task 1.4).\n",
+    "\n",
+    "Blow we define:\n",
+    "- `alphas` - list of regularization coefficient to search through. \n",
+    "- `ks` - list of number of features values to search through.\n",
+    "\n",
+    "Your task:\n",
+    "- Create `grid_cv_k_best` \n",
+    "    - `GridSearchCV` object\n",
+    "    - Use `alphas` and `ks` to define parameter grid for estimator and feature selector\n",
+    "\n",
+    "- Fit `grid_cv_k_best` on the whole training set `X_tr`. Optimize $R^2$-score on 3-fold cross-validation. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 104,
+   "metadata": {
+    "deletable": false,
+    "executionInfo": {
+     "elapsed": 23330,
+     "status": "ok",
+     "timestamp": 1607726115016,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "4wivQoPHX9en",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "3b2a005ef7555947c927b07321baaeb3",
+     "grade": false,
+     "grade_id": "cell-dc307258540ac640",
+     "locked": false,
+     "schema_version": 3,
+     "solution": true,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "GridSearchCV(cv=3, error_score=nan,\n",
+       "             estimator=Pipeline(memory=None,\n",
+       "                                steps=[('col_transformer',\n",
+       "                                        ColumnTransformer(n_jobs=None,\n",
+       "                                                          remainder='passthrough',\n",
+       "                                                          sparse_threshold=0.3,\n",
+       "                                                          transformer_weights=None,\n",
+       "                                                          transformers=[('ohe',\n",
+       "                                                                         OneHotEncoder(categories='auto',\n",
+       "                                                                                       drop=None,\n",
+       "                                                                                       dtype=<class 'numpy.float64'>,\n",
+       "                                                                                       handle_unknown='ignore',\n",
+       "                                                                                       sparse=True),\n",
+       "                                                                         ['X0',\n",
+       "                                                                          'X1',\n",
+       "                                                                          'X2',\n",
+       "                                                                          'X3',\n",
+       "                                                                          'X4',\n",
+       "                                                                          'X5'...\n",
+       "                                        Ridge(alpha=1.0, copy_X=True,\n",
+       "                                              fit_intercept=True, max_iter=None,\n",
+       "                                              normalize=False, random_state=0,\n",
+       "                                              solver='auto', tol=0.001))],\n",
+       "                                verbose=False),\n",
+       "             iid='deprecated', n_jobs=None,\n",
+       "             param_grid={'estimator__alpha': array([1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01, 1.e+02, 1.e+03,\n",
+       "       1.e+04])},\n",
+       "             pre_dispatch='2*n_jobs', refit=True, return_train_score=False,\n",
+       "             scoring='r2', verbose=0)"
+      ]
+     },
+     "execution_count": 104,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model_k_best.set_params(estimator__random_state=0);\n",
+    "alphas = np.logspace(-4, 4, 9)\n",
+    "ks = np.arange(20, 310, 30)\n",
+    "\n",
+    "\n",
+    "# your code here\n",
+    "grid_cv_k_best = GridSearchCV(model_k_best, param_grid=param_grid, cv=3, scoring='r2')\n",
+    "grid_cv_k_best.fit(X_tr, y_tr)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "0d13174b56da5e5eb058400129241112",
+     "grade": true,
+     "grade_id": "cell-43bdb013d0e9bb1c",
+     "locked": true,
+     "points": 1,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Best pipeline:\n",
+      "('col_transformer', ColumnTransformer(n_jobs=None, remainder='passthrough', sparse_threshold=0.3,\n",
+      "                  transformer_weights=None,\n",
+      "                  transformers=[('ohe',\n",
+      "                                 OneHotEncoder(categories='auto', drop=None,\n",
+      "                                               dtype=<class 'numpy.float64'>,\n",
+      "                                               handle_unknown='ignore',\n",
+      "                                               sparse=True),\n",
+      "                                 ['X0', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6',\n",
+      "                                  'X8'])],\n",
+      "                  verbose=False))\n",
+      "('feat_selector', SelectKBest(k=20, score_func=<function get_abs_corr_coef at 0x7ffb7c2b2a70>))\n",
+      "('estimator', Ridge(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=None,\n",
+      "      normalize=False, random_state=0, solver='auto', tol=0.001))\n"
+     ]
+    }
+   ],
+   "source": [
+    "print('Best pipeline:')\n",
+    "print(grid_cv_k_best.best_estimator_.steps[0])\n",
+    "print(grid_cv_k_best.best_estimator_.steps[1])\n",
+    "print(grid_cv_k_best.best_estimator_.steps[2])\n",
+    "\n",
+    "best_k = grid_cv_k_best.best_estimator_\n",
+    "assert isinstance(best_k.steps[0][1], ColumnTransformer)\n",
+    "assert isinstance(best_k.steps[1][1], SelectKBest)\n",
+    "assert isinstance(best_k.steps[2][1], Ridge)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/",
+     "height": 330
+    },
+    "deletable": false,
+    "editable": false,
+    "executionInfo": {
+     "elapsed": 17969,
+     "status": "ok",
+     "timestamp": 1607725107681,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "1orevPz6X9en",
+    "nbgrader": {
+     "cell_type": "code",
+     "checksum": "cddee803391bc050c9ac38fe239f1fdc",
+     "grade": false,
+     "grade_id": "cell-c70963537664edfa",
+     "locked": true,
+     "schema_version": 3,
+     "solution": false,
+     "task": false
+    },
+    "outputId": "4b572352-dbe4-4069-8da1-dad8cdff403b"
+   },
+   "outputs": [
+    {
+     "ename": "ValueError",
+     "evalue": "cannot reshape array of size 9 into shape (9,10)",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mValueError\u001b[0m                                Traceback (most recent call last)",
+      "\u001b[0;32m<ipython-input-106-e7eea473173e>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0mscores\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mgrid_cv_k_best\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcv_results_\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'mean_test_score'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m \u001b[0mheatmap\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mplt\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpcolor\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mscores\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mreshape\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mlen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0malphas\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mlen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mks\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcmap\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m\"RdYlGn\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      3\u001b[0m \u001b[0mplt\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcolorbar\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mheatmap\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m \u001b[0mplt\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mxticks\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mnp\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0marange\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mlen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mks\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;34m+\u001b[0m \u001b[0;36m0.5\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mks\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m \u001b[0mplt\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mxlabel\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"number of features\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;31mValueError\u001b[0m: cannot reshape array of size 9 into shape (9,10)"
+     ]
+    }
+   ],
+   "source": [
+    "scores = grid_cv_k_best.cv_results_['mean_test_score']\n",
+    "heatmap = plt.pcolor(scores.reshape(len(alphas), len(ks)), cmap=\"RdYlGn\")\n",
+    "plt.colorbar(heatmap)\n",
+    "plt.xticks(np.arange(len(ks)) + 0.5, ks)\n",
+    "plt.xlabel(\"number of features\")\n",
+    "plt.yticks(np.arange(len(alphas)) + 0.5, alphas)\n",
+    "plt.ylabel(\"alpha\")\n",
+    "plt.show()\n",
+    "\n",
+    "print(\"Optimal alpha  = %.4f\" % grid_cv_k_best.best_estimator_.steps[2][1].alpha)\n",
+    "print(\"Optimal number of features  = %.4f\" % grid_cv_k_best.best_estimator_.steps[1][1].k)\n",
+    "print(\"Optimal R2 score = %.4f\" % grid_cv_k_best.best_score_)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 107,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "executionInfo": {
+     "elapsed": 13609,
+     "status": "ok",
+     "timestamp": 1607725107682,
+     "user": {
+      "displayName": "Марина Поминова",
+      "photoUrl": "",
+      "userId": "04196186528550871600"
+     },
+     "user_tz": -180
+    },
+    "id": "M-Z-UCU3uERD",
+    "outputId": "a3139a76-42fd-4c72-f240-def0be8f5dc6"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train R2 = 0.51\n",
+      "Test R2 = 0.56\n"
+     ]
+    }
+   ],
+   "source": [
+    "# fit the best model and evaluate performance on test set\n",
+    "best_model = grid_cv_k_best.best_estimator_\n",
+    "R2_tr, R2_te = evaluate_model(best_model, X_tr, y_tr, X_te, y_te)\n",
+    "print(\"Train R2 = %.2f\" % R2_tr)\n",
+    "print(\"Test R2 = %.2f\" % R2_te)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "colab": {
+   "collapsed_sections": [],
+   "name": "hw3.ipynb",
+   "provenance": []
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
