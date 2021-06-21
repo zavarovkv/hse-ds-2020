@@ -1,0 +1,27 @@
+# .ppk to .pem
+puttygen Documents/SSH/key.ppk -O private-openssh -oDocuments/SSH/key.pem
+
+# connect to hadoop
+ssh -i Documents/SSH/key.pem kzavarov@hadoop2.yandex.ru
+
+# create tunnel
+ssh -i Documents/SSH/key.pem -L 50070:hadoop2-10.yandex.ru:50070 kzavarov@hadoop2.yandex.ru
+
+# create config
+nano ~/.hdfscli.cfg
+
+# get info about blocks
+hdfs fsck /data/lsml/1-hdfs/lsml.sample -files -blocks -fs
+
+# get info about every block
+hdfs fsck -blockId blk_1110321737
+
+# ls
+hdfs dfs -ls /data/lsml/2-mapreduce/
+
+# chmod
+chmod u+rwx mapper.py
+chmod u+rwx reducer.py
+
+# map + reduce
+cat sample.txt | python mapper.py | sort | python reducer.py
