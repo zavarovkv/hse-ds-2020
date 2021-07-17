@@ -25,3 +25,27 @@ chmod u+rwx reducer.py
 
 # map + reduce
 cat sample.txt | python mapper.py | sort | python reducer.py
+
+# Spark
+
+# for jupiter notebook
+ssh -i Documents/SSH/key.pem -L 50070:hadoop2-10.yandex.ru:50070 kzavarov@hadoop2.yandex.ru -L 30021:localhost:30021
+
+# executing notebook
+PYSPARK_DRIVER_PYTHON=jupyter PYSPARK_PYTHON=/usr/bin/python3 PYSPARK_DRIVER_PYTHON_OPTS='notebook --ip="*" --port=30011 --NotebookApp.token="TOKEN" --no-browser' pyspark2 --master=yarn --num-executors=2
+
+# spark run
+spark2-submit --master yarn task1.py > out.txt
+
+
+
+
+ssh -i Documents/SSH/key.pem -L 30011:localhost:30011 kzavarov@hadoop2.yandex.ru
+
+
+ssh -i C:\Users\galki\Documents\ssh-keys\msds_ynd -L 30011:localhost:30011 gkirill@hadoop2.yandex.ru
+
+
+
+
+PYSPARK_DRIVER_PYTHON=jupyter PYSPARK_PYTHON=/usr/bin/python PYSPARK_DRIVER_PYTHON_OPTS='notebook --ip="*" --port=30011 --NotebookApp.token="TOKEN" --no-browser' pyspark2 --master=yarn-client --executor-memory=3GB
