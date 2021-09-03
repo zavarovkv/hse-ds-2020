@@ -1,0 +1,111 @@
+# Introdaction
+
+## service
+https://labs.play-with-docker.com
+
+## create dockerfile
+touch Dockerfile
+
+## commands
+docker pull adkosmos/decryptor
+docker run adkosmos/decryptor
+
+## current dir
+echo $PWD
+
+## run py script in docker with mounted file in args
+docker run -v /root/secret.txt:/secret.txt adkosmos/decryptor /secret.txt
+
+
+
+# Docker Compose -- tool for maanaging multiple containers
+
+docker pull adkosmos/vault:latest
+docker pull adkosmos/decryptor-http:latest
+
+touch docker-compose.yaml
+
+## docker-compose.yaml
+'''
+version: '3.7'
+
+services:
+  vault:
+    image: adkosmos/vault
+    ports:
+      - 9090:9090
+      
+  server:
+    image: adkosmos/decryptor-http
+    ports:
+      - 9091:9090
+'''
+
+docker-compose up --build
+
+
+docker container ls
+docker rm -f <container-name>
+
+
+
+# Docker Swarm -- system for orchestrating multiple containers across multiple machines
+
+docker swarm init --advertise-addr 192.168.0.13
+
+docker swarm join-token -q worker
+
+touch docker-compose.yaml
+mkdir config
+touch ocnfig/app.json
+
+docker pull mongo:4.2
+docker pull adicom/admin-mongo:latest
+
+## docker-compose.yaml
+'''
+version: '3.7'
+
+services:
+  database:
+    image: mongo:4.2
+      
+  application:
+    image: adicom/admin-mongo:latest
+    deploy:
+      mode: replicated
+      replicas: 2
+    ports:
+      - 1234:1234
+    configs:
+      - source: app-config
+
+configs: 
+  app-config:
+    file: ./config/app.json
+  
+'''
+
+# app.json
+'''
+{
+    "app": {
+        "host": "database",
+        "port": 27017
+    }
+}
+'''
+
+docker stack deploy --compose-file docker-compose.yaml service
+
+docker service create \
+  --name=supervisor \
+  --publish=9090:9090/tcp \
+  --constraint=node.role==manager \
+  --mount=type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
+  adkosmos/supervisor:latest
+
+
+
+## run celery worker
+ celery -A server-celery worker --loglevel=INFO
