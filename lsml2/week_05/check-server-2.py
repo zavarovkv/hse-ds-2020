@@ -26,5 +26,5 @@ for q in questions:
 
     result.append(r.json()['result'])
 
-with open('/home/jovyan/work/result.json', 'w') as f:
+with open('result.json', 'w') as f:
     f.write(json.dumps(result, indent=4))

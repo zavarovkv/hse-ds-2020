@@ -1,0 +1,19 @@
+name: sentiment_classifier
+
+docker_env:
+  image:  sentiment_classifier
+
+entry_points:
+  main:
+    parameters:
+      experiment_name: {type: string, default: "none" }
+      data_path: {type: string}
+      c: {type: float, default: 5.2}
+      max_iter: {type: int, default: 100}
+      run_origin: {type: string, default: "default" }
+    command: "python main.py
+                --experiment_name {experiment_name}
+                --data_path {data_path}
+                --c {max_depth}
+                --max_iter {max_leaf_nodes}
+                --run_origin {run_origin}"

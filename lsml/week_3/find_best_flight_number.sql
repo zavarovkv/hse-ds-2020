@@ -64,3 +64,4 @@ join b_seats2 t4
 on t1.flight_no = t4.flight_no
 order by metric	desc
 
+35622

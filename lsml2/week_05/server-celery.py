@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# run celery worker
+# celery -A server-celery worker --loglevel=INFO
+
+
 import json
 import numpy as np
 
